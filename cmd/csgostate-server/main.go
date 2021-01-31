@@ -27,7 +27,6 @@ func main() {
 	// Serve player states as an API
 	go ServeAPI(listener.HandlerFunc)
 
-	go listener.Listen()
 	for state := range listener.Updates {
 		//fmt.Printf("%v\n", state)
 		players.Update(&state)
