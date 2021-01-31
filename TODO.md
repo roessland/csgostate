@@ -30,7 +30,7 @@ empty or missing field (which isn't really a problem).
 ```
 "Config name goes here, can be anything"
 {
-    "uri" "http://127.0.0.1:3000"
+    "uri" "http://127.0.0.1:3528"
     "timeout" "5.0"
     "buffer"  "0.1"
     "throttle" "0.1"
@@ -73,7 +73,7 @@ These are important. In particular, since I want a live-updated
 dashboard:
 * uri: Use a HTTPS address with SSL. Steam will validate the cert.
   But since we have a middleman client to filter out useless info,
-  localhost:3000 should be fine.
+  localhost:3528 should be fine.
 * timeout: Client will consider a message timed out if there is no 
   response after this amount of time. The implications of this
   is that the API should buffer incoming messages and immediately

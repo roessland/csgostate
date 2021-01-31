@@ -29,8 +29,8 @@ func NewListener() *Listener {
 
 func (listener *Listener) Listen() {
 	http.HandleFunc("/", listener.handler)
-	log.Print("listening on http://127.0.0.1:3000/")
-	log.Fatal(http.ListenAndServe("127.0.0.1:3000", nil))
+	log.Print("listening on http://127.0.0.1:3528/")
+	log.Fatal(http.ListenAndServe("127.0.0.1:3528", nil))
 }
 
 func InstallCfg() error {
