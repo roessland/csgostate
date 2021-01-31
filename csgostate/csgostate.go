@@ -28,7 +28,7 @@ func NewListener() *Listener {
 }
 
 func (listener *Listener) Listen() {
-	http.HandleFunc("/", listener.handler)
+	http.HandleFunc("/", listener.HandlerFunc)
 	log.Print("listening on http://127.0.0.1:3528/")
 	log.Fatal(http.ListenAndServe("127.0.0.1:3528", nil))
 }
@@ -92,7 +92,7 @@ func (listener *Listener) postHandler(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 }
 
-func (listener *Listener) handler(w http.ResponseWriter, r *http.Request) {
+func (listener *Listener) HandlerFunc(w http.ResponseWriter, r *http.Request) {
 	if r.Method == http.MethodPost {
 		listener.postHandler(w, r)
 	}

@@ -19,11 +19,14 @@ func main() {
 	// Store the state of every player that has ever sent a gamestate to us
 	players = NewPlayerRepo()
 
-	// Serve player states as an API
-	go ServeAPI()
+
 
 	// Listen to gamestate integration push messages
 	listener := csgostate.NewListener()
+
+	// Serve player states as an API
+	go ServeAPI(listener.HandlerFunc)
+
 	go listener.Listen()
 	for state := range listener.Updates {
 		//fmt.Printf("%v\n", state)
@@ -31,13 +34,17 @@ func main() {
 	}
 }
 
-func ServeAPI() {
+func ServeAPI(pushHandler http.HandlerFunc) {
 	router := mux.NewRouter()
 
 	router.HandleFunc("/api/health", func(w http.ResponseWriter, r *http.Request) {
 		// an example API handler
 		w.Header().Set("Cache-Control", "no-cache, private, max-age=0")
 		json.NewEncoder(w).Encode(map[string]bool{"ok": true})
+	})
+
+	router.HandleFunc("/api/push", func(w http.ResponseWriter, r *http.Request) {
+		pushHandler.ServeHTTP(w, r)
 	})
 
 	router.HandleFunc("/api/players", func(w http.ResponseWriter, r *http.Request) {
@@ -57,7 +64,7 @@ func ServeAPI() {
 
 	srv := &http.Server{
 		Handler: router,
-		Addr:    "127.0.0.1:8000",
+		Addr:    "127.0.0.1:3528",
 		// Good practice: enforce timeouts for servers you create!
 		WriteTimeout: 15 * time.Second,
 		ReadTimeout:  15 * time.Second,
