@@ -4733,3 +4733,54 @@ Joining new deathmatch server. Choosing team. Warmup ends. Round starts.
         }
 }
 ```
+
+
+## Steam OAuth2 login
+
+We can authenticate users in the following way:
+
+1. Let them sign in using Steam OAuth2 provider. We get the steam ID.
+2. Generate the cfg file with a random secret token in the auth section.
+3. User manually install cfg file.
+4. User launches CS:GO. CS:GO sends HTTP request to API.
+5. Reverse lookup secret token -> steam ID. It's not valid if steamID in message
+is different from the stored steam ID.
+
+This way all requests are connected to a SteamID. 
+We can simply drop all unauthenticated requests.
+
+Steam OpenID provider:
+
+    $ curl https://steamcommunity.com/openid
+    <?xml version="1.0" encoding="UTF-8"?>
+    <xrds:XRDS xmlns:xrds="xri://$xrds" xmlns="xri://$xrd*($v*2.0)">
+    <XRD>
+    <Service priority="0">
+    <Type>http://specs.openid.net/auth/2.0/server</Type>
+    <URI>https://steamcommunity.com/openid/login</URI>
+    </Service>
+    </XRD>
+    </xrds:XRDS>
+
+Curling the URI gives this. We are redirected to Steamcommunity.com with a new cookie.
+
+    > GET /openid/login HTTP/1.1
+    > Host: steamcommunity.com
+    > User-Agent: curl/7.47.0
+    > Accept: */*
+    >
+    < HTTP/1.1 302 Moved Temporarily
+    < Server: nginx
+    < Content-Type: text/html; charset=UTF-8
+    < X-Frame-Options: DENY
+    < Content-Security-Policy: default-src blob: data: https: 'unsafe-inline' 'unsafe-eval'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://community.cloudflare.steamstatic.com/ https://cdn.cloudflare.steamstatic.com/steamcommunity/public/assets/ https://api.steampowered.com/ *.google-analytics.com https://www.google.com https://www.gstatic.com https://apis.google.com https://recaptcha.net https://www.gstatic.cn/recaptcha/; object-src 'none'; connect-src 'self' https://community.cloudflare.steamstatic.com/ https://store.steampowered.com/ wss://community.steam-api.com/websocket/ https://api.steampowered.com/ *.google-analytics.com https://*.valvesoftware.com https://*.steambeta.net https://*.steamcontent.com https://steambroadcast.akamaized.net https://steambroadcastchat.akamaized.net https://broadcast.st.dl.bscstorage.net https://broadcast.st.dl.eccdnx.com http://127.0.0.1:27060 ws://127.0.0.1:27060; frame-src 'self' steam: https://store.steampowered.com/ https://www.youtube.com https://www.google.com https://sketchfab.com https://player.vimeo.com https://medal.tv https://www.google.com/recaptcha/ https://recaptcha.net/recaptcha/ https://help.steampowered.com/;
+    < Expires: Mon, 26 Jul 1997 05:00:00 GMT
+    < Cache-Control: no-cache
+    < Location: https://steamcommunity.com
+    < Content-Encoding: gzip
+    < Vary: Accept-Encoding
+    < Content-Length: 20
+    < Date: Mon, 01 Feb 2021 17:24:04 GMT
+    < Connection: keep-alive
+    < Set-Cookie: sessionid=d4350b4b59afe4b20820ef49; Path=/; Secure; SameSite=None
+    < Set-Cookie: steamCountry=DE%7C60698fcbe40561212d3a1b665a038208; Path=/; Secure; SameSite=None

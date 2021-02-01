@@ -19,8 +19,6 @@ func main() {
 	// Store the state of every player that has ever sent a gamestate to us
 	players = NewPlayerRepo()
 
-
-
 	// Listen to gamestate integration push messages
 	listener := csgostate.NewListener()
 
@@ -53,6 +51,11 @@ func ServeAPI(pushHandler http.HandlerFunc) {
 		if err != nil {
 			log.Println(err)
 		}
+	})
+
+	router.HandleFunc("/steamlogin", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "text/html")
+		w.Write([]byte("this is steam login"))
 	})
 
 	router.PathPrefix("/").HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
