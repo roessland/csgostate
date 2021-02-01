@@ -4,7 +4,7 @@ type State struct {
 	Provider Provider `json:"provider"`
 	Player   Player   `json:"player"`
 	Round    Round    `json:"round"`
-	RawJson  string
+	RawJson  []byte
 }
 
 /*

@@ -80,7 +80,7 @@ func (listener *Listener) postHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var change State
-	change.RawJson = string(body)
+	change.RawJson = body
 	err = json.Unmarshal(body, &change)
 	if err != nil {
 		log.Printf("csgostate: unmarshaling body: %s")
