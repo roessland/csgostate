@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"github.com/gorilla/mux"
 	"github.com/roessland/csgostate/csgostate"
+	"golang.org/x/oauth2"
 	"log"
 	"net/http"
 	"time"
@@ -53,9 +54,29 @@ func ServeAPI(pushHandler http.HandlerFunc) {
 		}
 	})
 
-	router.HandleFunc("/steamlogin", func(w http.ResponseWriter, r *http.Request) {
+	oauthCfg := &oauth2.Config{
+		ClientID:     "",
+		ClientSecret: "https://localhost:3528/steamlogin/return",
+		Endpoint:     oauth2.Endpoint{
+			AuthURL:   "https://steamcommunity.com/openid",
+			TokenURL:  "",
+			AuthStyle: oauth2.AuthStyleAutoDetect,
+		},
+		RedirectURL:  "",
+		Scopes:       nil,
+	}
+
+	router.HandleFunc("/steamlogin/return", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "text/html")
-		w.Write([]byte("this is steam login"))
+		w.Write([]byte("this is steam login return"))
+		// To verify the user, make a call from your backend to
+		//https://steamcommunity.com/openid/login copying every query string parameter
+		//from that response with one exception: replace &openid.mode=id_res
+		//with &openid.mode=check_authentication.
+	})
+
+	router.HandleFunc("/steamlogin/redirect", func(w http.ResponseWriter, r *http.Request) {
+		http.Redirect(w, r, oauthCfg.AuthCodeURL("banana"), http.StatusFound)
 	})
 
 	router.PathPrefix("/").HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

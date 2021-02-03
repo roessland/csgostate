@@ -12,7 +12,16 @@
     <h1>CS:GO State</h1>
     <p>See <a href="https://github.com/roessland/csgostate">https://github.com/roessland/csgostate</a> for an explanation.</p>
     <p>
-        $button = "<a href='?login'><img src='https://steamcommunity-a.akamaihd.net/public/images/signinthroughsteam/sits_square.png'></a>";
+        $button = "<a href='steamlogin/redirect'><img src='https://steamcommunity-a.akamaihd.net/public/images/signinthroughsteam/sits_square.png'></a>";
+    <form action="https://steamcommunity.com/openid/login" method="post">
+        <input type="hidden" name="openid.identity" value="http://specs.openid.net/auth/2.0/identifier_select">
+        <input type="hidden" name="openid.claimed_id" value="http://specs.openid.net/auth/2.0/identifier_select">
+        <input type="hidden" name="openid.ns" value="http://specs.openid.net/auth/2.0">
+        <input type="hidden" name="openid.mode" value="checkid_setup">
+        <input type="hidden" name="openid.realm" value="http://localhost:3528/">
+        <input type="hidden" name="openid.return_to" value="http://localhost:3528/steamlogin/return">
+        <button type="image" src="https://steamcommunity-a.akamaihd.net/public/images/signinthroughsteam/sits_square.png" class="btn btn-steam" id="js-sign-in">Sign in through Steam</button>
+    </form>
     </p>
     <pre id="players">
 
@@ -20,4 +29,4 @@
     <script src="https://cdn.jsdelivr.net/npm/jquery@3.5.1/dist/jquery.min.js" integrity="sha256-9/aliU8dGd2tb6OSsuzixeV4y/faTqgFtohetphbbj0=" crossorigin="anonymous"></script>
     <script src="static/csgostate.js?w"></script>
 </body>
-</html>
+</html>http://localhost:3528/steamlogin/return?openid.ns=http%3A%2F%2Fspecs.openid.net%2Fauth%2F2.0&openid.mode=id_res&openid.op_endpoint=https%3A%2F%2Fsteamcommunity.com%2Fopenid%2Flogin&openid.claimed_id=https%3A%2F%2Fsteamcommunity.com%2Fopenid%2Fid%2F76561197993200126&openid.identity=https%3A%2F%2Fsteamcommunity.com%2Fopenid%2Fid%2F76561197993200126&openid.return_to=http%3A%2F%2Flocalhost%3A3528%2Fsteamlogin%2Freturn&openid.response_nonce=2021-02-01T22%3A51%3A53ZhqAGd4wqW2NYXuhZhVtgR7HV36s%3D&openid.assoc_handle=1234567890&openid.signed=signed%2Cop_endpoint%2Cclaimed_id%2Cidentity%2Creturn_to%2Cresponse_nonce%2Cassoc_handle&openid.sig=TQuJL%2FLbVcbfcA1Xu1LJbDvi7Fo%3D
