@@ -3,37 +3,133 @@ package main
 import (
 	"embed"
 	"encoding/json"
-	"github.com/gorilla/mux"
-	"github.com/roessland/csgostate/csgostate"
-	"golang.org/x/oauth2"
+	"fmt"
+	"html/template"
 	"log"
 	"net/http"
+	"os"
 	"time"
+
+	"github.com/gorilla/mux"
+	"github.com/markbates/goth"
+	"github.com/markbates/goth/gothic"
+	"github.com/markbates/goth/providers/steam"
+
+	"github.com/roessland/csgostate/csgostate"
 )
+
+
 
 //go:embed static/*
 //go:embed index.html
 var static embed.FS
-var players PlayerRepo
+
+//go:embed templates/*
+var templates embed.FS
+
+type App struct {
+	Config          Config
+	SteamHTTPClient *http.Client
+	SessionStore    *SessionStore
+	PlayerRepo      InMemoryPlayerRepo
+}
+
+type Config struct {
+	SessionSecret string
+	URL string
+}
+
+func (c Config) Verify() {
+	if len(c.SessionSecret) < 10 {
+		panic("missing or too short SESSION_SECRET environment variable")
+	}
+
+	if c.URL == "" {
+		panic("Must specify CSGOSS_URL")
+	}
+}
+
+func NewConfig() Config {
+	config := Config{}
+	config.URL = "http://localhost:3528/"
+	config.SessionSecret = os.Getenv("SESSION_SECRET")
+	return config
+}
+
+func NewApp(config Config) *App {
+	app := &App{}
+	app.Config = config
+	app.SessionStore = NewSessionStore([]byte(app.Config.SessionSecret))
+	app.PlayerRepo = NewPlayerRepo()
+	return app
+}
 
 func main() {
-	// Store the state of every player that has ever sent a gamestate to us
-	players = NewPlayerRepo()
+	app := NewApp(NewConfig())
 
 	// Listen to gamestate integration push messages
 	listener := csgostate.NewListener()
 
 	// Serve player states as an API
-	go ServeAPI(listener.HandlerFunc)
+	go ServeAPI(app, listener.HandlerFunc)
 
 	for state := range listener.Updates {
 		//fmt.Printf("%v\n", state)
-		players.Update(&state)
+		app.PlayerRepo.Update(&state)
 	}
 }
 
-func ServeAPI(pushHandler http.HandlerFunc) {
+func ServeAPI(app *App, pushHandler http.HandlerFunc) {
+	goth.UseProviders(
+		steam.New(os.Getenv("STEAM_KEY"), app.Config.URL + "auth/callback"),
+	)
+	gothic.GetProviderName = func(r *http.Request) (string, error) {
+		return "steam", nil
+	}
+
 	router := mux.NewRouter()
+
+	router.HandleFunc("/auth/login", func(w http.ResponseWriter, r *http.Request) {
+		gothic.BeginAuthHandler(w, r)
+	})
+
+	router.HandleFunc("/auth/callback", func(w http.ResponseWriter, r *http.Request) {
+		// Ask Steam API for user details
+		user, err := gothic.CompleteUserAuth(w, r)
+		if err != nil {
+			_, _ = fmt.Fprintln(w, "unable to fetch user details from Steam: ", err)
+			return
+		}
+
+		// Create a new session
+		sess, err := app.SessionStore.New(r)
+		if err != nil {
+			_, _ = fmt.Fprintln(w, "unable to create session")
+			return
+		}
+
+		sess.SetNickName(user.NickName)
+		sess.SetAvatarURL(user.AvatarURL)
+		sess.SetSteamID(user.UserID)
+
+		err = app.SessionStore.Save(r, w, sess)
+		if err != nil {
+			_, _ = fmt.Fprintln(w, "unable to save session cookie: ", err)
+		}
+
+		// Redirect to front page
+		w.Header().Set("Location", "/")
+		w.WriteHeader(http.StatusFound)
+	})
+
+	router.HandleFunc("/auth/logout", func(w http.ResponseWriter, r *http.Request) {
+		gothic.Logout(w, r)
+		sess, _ := app.SessionStore.New(r)
+		sess.Values = map[interface{}]interface{}{}
+		app.SessionStore.Save(r, w, sess)
+		w.Header().Set("Location", "/")
+		w.WriteHeader(http.StatusTemporaryRedirect)
+	})
 
 	router.HandleFunc("/api/health", func(w http.ResponseWriter, r *http.Request) {
 		// an example API handler
@@ -48,37 +144,33 @@ func ServeAPI(pushHandler http.HandlerFunc) {
 	router.HandleFunc("/api/players", func(w http.ResponseWriter, r *http.Request) {
 		// an example API handler
 		w.Header().Set("Cache-Control", "no-cache, private, max-age=0")
-		err := json.NewEncoder(w).Encode(players)
+		err := json.NewEncoder(w).Encode(app.PlayerRepo.GetAll())
 		if err != nil {
 			log.Println(err)
 		}
 	})
 
-	oauthCfg := &oauth2.Config{
-		ClientID:     "",
-		ClientSecret: "https://localhost:3528/steamlogin/return",
-		Endpoint:     oauth2.Endpoint{
-			AuthURL:   "https://steamcommunity.com/openid",
-			TokenURL:  "",
-			AuthStyle: oauth2.AuthStyleAutoDetect,
-		},
-		RedirectURL:  "",
-		Scopes:       nil,
-	}
+	router.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		sess, err := app.SessionStore.Get(r)
+		if err != nil {
+			_, _ = fmt.Fprintln(w, "unable to get session")
+			return
+		}
 
-	router.HandleFunc("/steamlogin/return", func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Content-Type", "text/html")
-		w.Write([]byte("this is steam login return"))
-		// To verify the user, make a call from your backend to
-		//https://steamcommunity.com/openid/login copying every query string parameter
-		//from that response with one exception: replace &openid.mode=id_res
-		//with &openid.mode=check_authentication.
+		tmpl, err := template.ParseFS(templates, "templates/index.tmpl.html")
+		if err != nil {
+			_, _ = fmt.Fprintln(w, "unable to load template: ", err)
+			return
+		}
+
+		err = tmpl.Execute(w, sess)
+		if err != nil {
+			_, _ = fmt.Fprintln(w, "unable to execute template: ", err)
+			return
+		}
 	})
 
-	router.HandleFunc("/steamlogin/redirect", func(w http.ResponseWriter, r *http.Request) {
-		http.Redirect(w, r, oauthCfg.AuthCodeURL("banana"), http.StatusFound)
-	})
-
+	// Catch-all for remaining requests. Must be last.
 	router.PathPrefix("/").HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Cache-Control", "no-cache, private, max-age=0")
 		w.Header().Set("Pragma", "no-cache")
@@ -93,5 +185,6 @@ func ServeAPI(pushHandler http.HandlerFunc) {
 		ReadTimeout:  15 * time.Second,
 	}
 
+	log.Printf("listening to %s", srv.Addr)
 	log.Fatal(srv.ListenAndServe())
 }

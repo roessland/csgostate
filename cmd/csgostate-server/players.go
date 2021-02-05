@@ -5,13 +5,30 @@ import (
 	"log"
 )
 
-type PlayerRepo map[string]*Player
+type PlayerRepo interface {
+	GetAll() []*Player
+	GetOrCreatePlayer(steamID string) *Player
+	Update(state *csgostate.State)
+}
 
-func NewPlayerRepo() PlayerRepo {
+// verify that it satisfies interface
+var _ PlayerRepo = InMemoryPlayerRepo{}
+
+type InMemoryPlayerRepo map[string]*Player
+
+func NewPlayerRepo() InMemoryPlayerRepo {
 	return make(map[string]*Player)
 }
 
-func (pr PlayerRepo) GetOrCreatePlayer(steamID string) *Player {
+func (pr InMemoryPlayerRepo) GetAll() []*Player {
+	var players []*Player
+	for _, p := range pr {
+		players = append(players, p)
+	}
+	return players
+}
+
+func (pr InMemoryPlayerRepo) GetOrCreatePlayer(steamID string) *Player {
 	_, ok := pr[steamID]
 	if !ok {
 		pr[steamID] = NewPlayer()
@@ -19,7 +36,7 @@ func (pr PlayerRepo) GetOrCreatePlayer(steamID string) *Player {
 	return pr[steamID]
 }
 
-func (pr PlayerRepo) Update(state *csgostate.State) {
+func (pr InMemoryPlayerRepo) Update(state *csgostate.State) {
 	steamID := state.Provider.SteamID
 	if steamID == "" {
 		log.Print("empty steamID in update")
