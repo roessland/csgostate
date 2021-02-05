@@ -83,10 +83,14 @@ func (listener *Listener) postHandler(w http.ResponseWriter, r *http.Request) {
 	change.RawJson = body
 	err = json.Unmarshal(body, &change)
 	if err != nil {
-		log.Printf("csgostate: unmarshaling body: %s")
+		log.Printf("csgostate: unmarshaling body: %s", err)
 		return
 	}
-	listener.Updates <- change
+
+	// Discard spectator player updates
+	if change.Provider.SteamID == change.Player.SteamID {
+		listener.Updates <- change
+	}
 
 	w.Header().Set("Content-Type", "text/html")
 	w.WriteHeader(http.StatusOK)

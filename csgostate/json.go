@@ -4,7 +4,14 @@ type State struct {
 	Provider Provider `json:"provider"`
 	Player   Player   `json:"player"`
 	Round    Round    `json:"round"`
+	Map Map `json:"map"`
 	RawJson  []byte
+}
+
+type Map struct {
+	Mode string `json:"mode"`
+	Name string `json:"name"`
+	Phase string `json:"phase"`
 }
 
 /*
@@ -22,6 +29,10 @@ type Provider struct {
 }
 
 type Player struct {
+	SteamID  string        `json:"steamid"`
+	Clan     string        `json:"clan"`
+	Name     string        `json:"name"`
+	Team     string        `json:"team"`
 	Activity string        `json:"activity"`
 	State    PlayerState   `json:"state"`
 	Weapons  PlayerWeapons `json:"weapons"`

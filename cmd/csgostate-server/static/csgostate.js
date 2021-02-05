@@ -12,23 +12,62 @@ function GetData() {
         dataType: "json",
         contentType: 'application/json; charset=utf-8',
         success: function(resultData) {
-            console.log("success");
-            let andy = resultData["76561197993200126"];
-            if (!andy) {
-                console.log("no andy", resultData);
-                return
-            }
-            let LatestState = andy.LatestState;
-            if (!LatestState) {
-                console.log("no state", andy);
-                return
-            }
-            let player = LatestState.player;
-            if (!player) {
-                console.log("no player", LatestState);
-                return
-            }
-             $("#players").html(JSON.stringify(player));
+            let html = "<table>";
+            html += "<thead><th>Nick</th>";
+            html += "<th>Health</th>";
+            html += "<th>Armor</th>";
+            html += "<th>Helmet</th>";
+            html += "<th>Money</th>";
+            html += "<th>Phase</th>";
+            html += "<th>Mode</th>";
+            html += "<th>Map</th>";
+            html += "<th>MapPhase</th>";
+            html += "</thead><tbody>";
+            resultData.forEach(playerState => {
+                let LatestState = playerState.LatestState;
+                if (!LatestState) {
+                    console.log("no state", andy);
+                    return
+                }
+                let player = LatestState.player;
+                if (!player) {
+                    console.log("no player", LatestState);
+                    return
+                }
+
+                let provider = LatestState.provider;
+                if (!provider) {
+                    console.log("no provider", LatestState);
+                    return
+                }
+
+                let round = LatestState.round;
+                if (!provider) {
+                    console.log("no round", LatestState);
+                    return
+                }
+
+                let map = LatestState.map;
+                if (!map) {
+                    console.log("no round", LatestState);
+                    return
+                }
+
+                html += "<tr>";
+                html += `<td>${player.name}</td>`
+                html += `<td>${player.state.health}</td>`
+                html += `<td>${player.state.armor}</td>`
+                html += `<td>${player.state.helmet}</td>`
+                html += `<td>${player.state.money}</td>`
+                html += `<td>${map.mode}</td>`
+                html += `<td>${map.name}</td>`
+                html += `<td>${map.phase}</td>`
+                html += `<td>${round.phase}</td>`
+
+                html += "</tr>";
+            })
+            html += "</tbody></table>";
+            $("#players").html(html);
         },
         error : function(xhr, textStatus, errorThrown) {
             console.log("error", textStatus);

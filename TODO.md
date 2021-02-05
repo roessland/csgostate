@@ -4784,3 +4784,9 @@ Curling the URI gives this. We are redirected to Steamcommunity.com with a new c
     < Connection: keep-alive
     < Set-Cookie: sessionid=d4350b4b59afe4b20820ef49; Path=/; Secure; SameSite=None
     < Set-Cookie: steamCountry=DE%7C60698fcbe40561212d3a1b665a038208; Path=/; Secure; SameSite=None
+
+
+## Game ID
+
+Or how to know whether two players are in the same team.
+RoundNo + map + team + game mode + phase + consecutive round losses

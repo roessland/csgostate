@@ -1,10 +1,13 @@
 package main
 
 import (
+	"bytes"
 	"embed"
 	"encoding/json"
 	"fmt"
 	"html/template"
+	"io"
+	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
@@ -37,15 +40,20 @@ type App struct {
 type Config struct {
 	SessionSecret string
 	URL string
+	SteamKey string
 }
 
-func (c Config) Verify() {
-	if len(c.SessionSecret) < 10 {
+func (config Config) Verify() {
+	if len(config.SessionSecret) < 10 {
 		panic("missing or too short SESSION_SECRET environment variable")
 	}
 
-	if c.URL == "" {
+	if config.URL == "" {
 		panic("Must specify CSGOSS_URL")
+	}
+
+	if len(config.SteamKey) == 0 {
+		panic("you must set STEAM_KEY env to get profile info")
 	}
 }
 
@@ -53,6 +61,8 @@ func NewConfig() Config {
 	config := Config{}
 	config.URL = "http://localhost:3528/"
 	config.SessionSecret = os.Getenv("SESSION_SECRET")
+	config.SteamKey = os.Getenv("STEAM_KEY")
+	config.Verify()
 	return config
 }
 
@@ -74,7 +84,7 @@ func main() {
 	go ServeAPI(app, listener.HandlerFunc)
 
 	for state := range listener.Updates {
-		//fmt.Printf("%v\n", state)
+		fmt.Printf("%v\n", state)
 		app.PlayerRepo.Update(&state)
 	}
 }
@@ -138,6 +148,13 @@ func ServeAPI(app *App, pushHandler http.HandlerFunc) {
 	})
 
 	router.HandleFunc("/api/push", func(w http.ResponseWriter, r *http.Request) {
+		buf, err := ioutil.ReadAll(r.Body)
+		if err != nil {
+			log.Print(err)
+		}
+		fmt.Println("\n\nxxxxx\n\n", string(buf))
+
+		r.Body = io.NopCloser(bytes.NewReader(buf))
 		pushHandler.ServeHTTP(w, r)
 	})
 
