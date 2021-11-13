@@ -29,7 +29,9 @@ func Index(app *server.App) func(w http.ResponseWriter, r *http.Request) {
 			if err != nil {
 				log.Print("error getting latest state for steamid ", sess.SteamID(), "err ", err)
 			} else {
-				lastStateRawJson = string(lastState.RawJson)
+				if lastState != nil && lastState.RawJson != nil {
+					lastStateRawJson = string(lastState.RawJson)
+				}
 			}
 		}
 
