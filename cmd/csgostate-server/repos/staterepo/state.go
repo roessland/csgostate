@@ -35,6 +35,9 @@ func (stateRepo *DBStateRepo) GetLatest(steamID string) (*csgostate.State, error
 	err := stateRepo.db.View(func(tx *bolt.Tx) error {
 		bucketName := getStatesBucketNameForUser(steamID)
 		bucket := tx.Bucket(bucketName)
+		if bucket == nil {
+			return nil
+		}
 		fmt.Println("getlatest bucketname", bucketName)
 
 		cursor := bucket.Cursor()
