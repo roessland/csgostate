@@ -4,12 +4,18 @@
 </head>
 <body>
     <h1>CS:GO State</h1>
-    <p>Logged in as: {{.NickName}}</p>
     <p>See <a href="https://github.com/roessland/csgostate">https://github.com/roessland/csgostate</a> for an explanation.</p>
+
+    {{if .IsLoggedIn}}
+        <p>Logged in as: {{.NickName}}</p>
+        <p><a href="/auth/logout">Log out</a></p>
+        <p><a href="/gamestate_integration_csgostate.cfg">Download config file</a></p>
+    {{else}}
     <p>
-    <a href="/auth/login"><img src="https://steamcommunity-a.akamaihd.net/public/images/signinthroughsteam/sits_small.png" alt="Sign in through Steam" class="btn btn-steam"></a>
+        <a href="/auth/login"><img src="https://steamcommunity-a.akamaihd.net/public/images/signinthroughsteam/sits_small.png" alt="Sign in through Steam" class="btn btn-steam"></a>
     </p>
-    <p><a href="/auth/logout">Log out</a></p>
+    {{end}}
+
     <pre id="players">
 
     </pre>

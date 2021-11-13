@@ -4,3 +4,4 @@
 /botmatch.json
 /csgostate.exe
 /cmd/csgostate-server/csgostate-server.exe
+*.db

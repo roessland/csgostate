@@ -4,13 +4,13 @@ type State struct {
 	Provider Provider `json:"provider"`
 	Player   Player   `json:"player"`
 	Round    Round    `json:"round"`
-	Map Map `json:"map"`
+	Map      Map      `json:"map"`
 	RawJson  []byte
 }
 
 type Map struct {
-	Mode string `json:"mode"`
-	Name string `json:"name"`
+	Mode  string `json:"mode"`
+	Name  string `json:"name"`
 	Phase string `json:"phase"`
 }
 

@@ -5,23 +5,34 @@ import (
 	"embed"
 	"encoding/json"
 	"fmt"
+	"github.com/roessland/csgostate/csgostate"
 	"html/template"
 	"io"
 	"io/ioutil"
 	"log"
 	"net/http"
-	"os"
 	"time"
 
 	"github.com/gorilla/mux"
 	"github.com/markbates/goth"
 	"github.com/markbates/goth/gothic"
 	"github.com/markbates/goth/providers/steam"
-
-	"github.com/roessland/csgostate/csgostate"
+	bolt "go.etcd.io/bbolt"
 )
 
+func main() {
+	app, err := NewApp(NewConfig())
+	if err != nil {
+		log.Fatal(err)
+	}
 
+	go app.ServeAPI()
+
+	for state := range app.StateListener.Updates {
+		fmt.Printf("%v\n", state)
+		app.PlayerRepo.Update(&state)
+	}
+}
 
 //go:embed static/*
 //go:embed index.html
@@ -34,64 +45,37 @@ type App struct {
 	Config          Config
 	SteamHTTPClient *http.Client
 	SessionStore    *SessionStore
-	PlayerRepo      InMemoryPlayerRepo
+	DB              *bolt.DB
+	UserRepo        UserRepo
+	PlayerRepo      PlayerRepo
+	StateListener   *csgostate.Listener
 }
 
-type Config struct {
-	SessionSecret string
-	URL string
-	SteamKey string
-}
-
-func (config Config) Verify() {
-	if len(config.SessionSecret) < 10 {
-		panic("missing or too short SESSION_SECRET environment variable")
-	}
-
-	if config.URL == "" {
-		panic("Must specify CSGOSS_URL")
-	}
-
-	if len(config.SteamKey) == 0 {
-		panic("you must set STEAM_KEY env to get profile info")
-	}
-}
-
-func NewConfig() Config {
-	config := Config{}
-	config.URL = "http://localhost:3528/"
-	config.SessionSecret = os.Getenv("SESSION_SECRET")
-	config.SteamKey = os.Getenv("STEAM_KEY")
-	config.Verify()
-	return config
-}
-
-func NewApp(config Config) *App {
+func NewApp(config Config) (*App, error) {
+	var err error
 	app := &App{}
 	app.Config = config
 	app.SessionStore = NewSessionStore([]byte(app.Config.SessionSecret))
-	app.PlayerRepo = NewPlayerRepo()
-	return app
-}
-
-func main() {
-	app := NewApp(NewConfig())
-
-	// Listen to gamestate integration push messages
-	listener := csgostate.NewListener()
-
-	// Serve player states as an API
-	go ServeAPI(app, listener.HandlerFunc)
-
-	for state := range listener.Updates {
-		fmt.Printf("%v\n", state)
-		app.PlayerRepo.Update(&state)
+	app.DB, err = bolt.Open("csgostate.db", 0666, nil)
+	if err != nil {
+		return nil, err
 	}
+	app.PlayerRepo = NewPlayerRepo()
+	app.UserRepo, err = NewDBUserRepo(app.DB, app.Config.PushTokenSecret)
+	if err != nil {
+		return nil, err
+	}
+	app.StateListener = csgostate.NewListener()
+	return app, nil
 }
 
-func ServeAPI(app *App, pushHandler http.HandlerFunc) {
+func (app *App) Close() {
+	app.DB.Close()
+}
+
+func (app *App) ServeAPI() {
 	goth.UseProviders(
-		steam.New(os.Getenv("STEAM_KEY"), app.Config.URL + "auth/callback"),
+		steam.New(app.Config.SteamKey, app.Config.URL+"auth/callback"),
 	)
 	gothic.GetProviderName = func(r *http.Request) (string, error) {
 		return "steam", nil
@@ -105,26 +89,45 @@ func ServeAPI(app *App, pushHandler http.HandlerFunc) {
 
 	router.HandleFunc("/auth/callback", func(w http.ResponseWriter, r *http.Request) {
 		// Ask Steam API for user details
-		user, err := gothic.CompleteUserAuth(w, r)
+		oauthUser, err := gothic.CompleteUserAuth(w, r)
 		if err != nil {
-			_, _ = fmt.Fprintln(w, "unable to fetch user details from Steam: ", err)
+			http.Error(w, fmt.Sprintf("unable to fetch user details from Steam: %s", err), 500)
 			return
 		}
 
 		// Create a new session
 		sess, err := app.SessionStore.New(r)
 		if err != nil {
-			_, _ = fmt.Fprintln(w, "unable to create session")
+			http.Error(w, fmt.Sprintf("unable to create session: %s", err), 500)
 			return
 		}
+		sess.SetNickName(oauthUser.NickName)
+		sess.SetAvatarURL(oauthUser.AvatarURL)
+		sess.SetSteamID(oauthUser.UserID)
 
-		sess.SetNickName(user.NickName)
-		sess.SetAvatarURL(user.AvatarURL)
-		sess.SetSteamID(user.UserID)
+		user, err := app.UserRepo.GetBySteamID(oauthUser.UserID)
+		if err != nil {
+			log.Println("SteamID ", oauthUser.UserID)
+			http.Error(w, fmt.Sprintf("unable to get user: %s", err), 500)
+			return
+		}
+		if user == nil {
+			user = &User{
+				SteamID:   oauthUser.UserID,
+				NickName:  oauthUser.NickName,
+				AvatarURL: oauthUser.AvatarURL,
+			}
+			err := app.UserRepo.Create(user)
+			if err != nil {
+				http.Error(w, fmt.Sprintf("unable to create user: %s", err), 500)
+				return
+			}
+		}
 
 		err = app.SessionStore.Save(r, w, sess)
 		if err != nil {
-			_, _ = fmt.Fprintln(w, "unable to save session cookie: ", err)
+			http.Error(w, fmt.Sprintf("unable to save session cookie: %s", err), 500)
+			return
 		}
 
 		// Redirect to front page
@@ -144,7 +147,10 @@ func ServeAPI(app *App, pushHandler http.HandlerFunc) {
 	router.HandleFunc("/api/health", func(w http.ResponseWriter, r *http.Request) {
 		// an example API handler
 		w.Header().Set("Cache-Control", "no-cache, private, max-age=0")
-		json.NewEncoder(w).Encode(map[string]bool{"ok": true})
+		err := json.NewEncoder(w).Encode(map[string]bool{"ok": true})
+		if err != nil {
+			log.Print(err)
+		}
 	})
 
 	router.HandleFunc("/api/push", func(w http.ResponseWriter, r *http.Request) {
@@ -155,7 +161,7 @@ func ServeAPI(app *App, pushHandler http.HandlerFunc) {
 		fmt.Println("\n\nxxxxx\n\n", string(buf))
 
 		r.Body = io.NopCloser(bytes.NewReader(buf))
-		pushHandler.ServeHTTP(w, r)
+		app.StateListener.HandlerFunc(w, r)
 	})
 
 	router.HandleFunc("/api/players", func(w http.ResponseWriter, r *http.Request) {
@@ -164,6 +170,42 @@ func ServeAPI(app *App, pushHandler http.HandlerFunc) {
 		err := json.NewEncoder(w).Encode(app.PlayerRepo.GetAll())
 		if err != nil {
 			log.Println(err)
+		}
+	})
+
+	router.HandleFunc("/gamestate_integration_csgostate.cfg", func(w http.ResponseWriter, r *http.Request) {
+		sess, err := app.SessionStore.Get(r)
+		if err != nil {
+			_, _ = fmt.Fprintln(w, "unable to get session")
+			return
+		}
+
+		user, err := app.UserRepo.GetBySteamID(sess.SteamID())
+		if err != nil {
+			_, _ = fmt.Fprintln(w, "error retrieving your user")
+			return
+		}
+		if user == nil {
+			_, _ = fmt.Fprintln(w, "you must be logged in to view cfg")
+			return
+		}
+
+		tmpl, err := template.ParseFS(templates, "templates/gamestate_integration_csgostate.tmpl.cfg")
+		if err != nil {
+			_, _ = fmt.Fprintln(w, "unable to load template: ", err)
+			return
+		}
+
+		err = tmpl.Execute(w, struct {
+			Sess *Session
+			User *User
+		}{
+			Sess: sess,
+			User: user,
+		})
+		if err != nil {
+			_, _ = fmt.Fprintln(w, "unable to execute template: ", err)
+			return
 		}
 	})
 
@@ -195,13 +237,12 @@ func ServeAPI(app *App, pushHandler http.HandlerFunc) {
 	})
 
 	srv := &http.Server{
-		Handler: router,
-		Addr:    "127.0.0.1:3528",
-		// Good practice: enforce timeouts for servers you create!
+		Handler:      router,
+		Addr:         "127.0.0.1:3528",
 		WriteTimeout: 15 * time.Second,
 		ReadTimeout:  15 * time.Second,
 	}
 
 	log.Printf("listening to %s", srv.Addr)
-	log.Fatal(srv.ListenAndServe())
+	log.Print(srv.ListenAndServe())
 }
