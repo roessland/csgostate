@@ -1,4 +1,4 @@
-package main
+package sessions
 
 import (
 	"github.com/gorilla/sessions"
@@ -17,12 +17,12 @@ func NewSessionStore(keyPairs ...[]byte) *SessionStore {
 }
 
 func (store *SessionStore) New(r *http.Request) (*Session, error) {
-	sess, err := store.basicStore.New(r, SessionCookieName)
+	sess, err := store.basicStore.New(r, sessionCookieName)
 	return (*Session)(sess), err
 }
 
 func (store *SessionStore) Get(r *http.Request) (*Session, error) {
-	sess, err := store.basicStore.Get(r, SessionCookieName)
+	sess, err := store.basicStore.Get(r, sessionCookieName)
 	return (*Session)(sess), err
 }
 

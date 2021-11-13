@@ -1,13 +1,13 @@
-package main
+package sessions
 
 import (
 	"github.com/gorilla/sessions"
 )
 
-const SessionCookieName = "_CSGOSS_SESSION"
-const SteamNickNameSessionKey = "SteamNick"
-const SteamAvatarURLCookieKey = "SteamAvatarURL"
-const SteamIDCookieKey = "SteamID"
+const sessionCookieName = "_CSGOSS_SESSION"
+const steamNickNameSessionKey = "SteamNick"
+const steamAvatarURLCookieKey = "SteamAvatarURL"
+const steamIDCookieKey = "SteamID"
 
 type Session sessions.Session
 
@@ -22,11 +22,11 @@ func (sess *Session) GetString(key string) string {
 }
 
 func (sess *Session) SteamID() string {
-	return sess.GetString(SteamIDCookieKey)
+	return sess.GetString(steamIDCookieKey)
 }
 
 func (sess *Session) SetSteamID(steamID string) {
-	sess.Values[SteamIDCookieKey] = steamID
+	sess.Values[steamIDCookieKey] = steamID
 }
 
 func (sess *Session) IsLoggedIn() bool {
@@ -34,17 +34,17 @@ func (sess *Session) IsLoggedIn() bool {
 }
 
 func (sess *Session) NickName() string {
-	return sess.GetString(SteamNickNameSessionKey)
+	return sess.GetString(steamNickNameSessionKey)
 }
 
 func (sess *Session) SetNickName(nickName string) {
-	sess.Values[SteamNickNameSessionKey] = nickName
+	sess.Values[steamNickNameSessionKey] = nickName
 }
 
 func (sess *Session) AvatarURL() string {
-	return sess.GetString(SteamAvatarURLCookieKey)
+	return sess.GetString(steamAvatarURLCookieKey)
 }
 
 func (sess *Session) SetAvatarURL(avatarURL string) {
-	sess.Values[SteamAvatarURLCookieKey] = avatarURL
+	sess.Values[steamAvatarURLCookieKey] = avatarURL
 }

@@ -1,4 +1,4 @@
-package main
+package userrepo
 
 import (
 	"github.com/stretchr/testify/require"

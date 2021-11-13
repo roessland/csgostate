@@ -1,4 +1,4 @@
-package main
+package playerrepo
 
 import (
 	"github.com/roessland/csgostate/csgostate"
