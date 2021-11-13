@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"os"
 	"path"
+	"time"
 )
 
 //go:embed "gamestate_integration_csgostate.cfg"
@@ -91,6 +92,10 @@ func (listener *Listener) postHandler(w http.ResponseWriter, r *http.Request) {
 	if change.Provider.SteamID == change.Player.SteamID {
 		listener.Updates <- change
 	}
+
+	// Replace timestamp with server time to get a consistent view of things
+	// if client time is wrong.
+	change.Provider.Timestamp = int(time.Now().UTC().Unix())
 
 	w.Header().Set("Content-Type", "text/html")
 	w.WriteHeader(http.StatusOK)

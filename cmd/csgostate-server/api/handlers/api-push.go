@@ -2,7 +2,6 @@ package handlers
 
 import (
 	"bytes"
-	"fmt"
 	"github.com/roessland/csgostate/cmd/csgostate-server/server"
 	"io"
 	"io/ioutil"
@@ -16,7 +15,6 @@ func ApiPush(app *server.App) func(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			log.Print(err)
 		}
-		fmt.Println("\n\nxxxxx\n\n", string(buf))
 
 		r.Body = io.NopCloser(bytes.NewReader(buf))
 		app.StateListener.HandlerFunc(w, r)

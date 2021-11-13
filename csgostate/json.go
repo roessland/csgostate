@@ -3,6 +3,7 @@ package csgostate
 type State struct {
 	Provider Provider `json:"provider"`
 	Player   Player   `json:"player"`
+	Auth     Auth     `json:"auth"`
 	Round    Round    `json:"round"`
 	Map      Map      `json:"map"`
 	RawJson  []byte
@@ -36,6 +37,12 @@ type Player struct {
 	Activity string        `json:"activity"`
 	State    PlayerState   `json:"state"`
 	Weapons  PlayerWeapons `json:"weapons"`
+}
+
+// Auth provides a way of authenticating gamestate messages.
+// If auth token matches SteamID in backend we know who sent the message.
+type Auth struct {
+	Token string `json:"token"`
 }
 
 /*

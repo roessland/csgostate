@@ -3,7 +3,9 @@ package handlers
 import (
 	"fmt"
 	"github.com/roessland/csgostate/cmd/csgostate-server/server"
+	"github.com/roessland/csgostate/cmd/csgostate-server/sessions"
 	"html/template"
+	"log"
 	"net/http"
 )
 
@@ -21,7 +23,23 @@ func Index(app *server.App) func(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		err = tmpl.Execute(w, sess)
+		var lastStateRawJson string
+		if sess.IsLoggedIn() {
+			lastState, err := app.StateRepo.GetLatest(sess.SteamID())
+			if err != nil {
+				log.Print("error getting latest state for steamid ", sess.SteamID(), "err ", err)
+			} else {
+				lastStateRawJson = string(lastState.RawJson)
+			}
+		}
+
+		err = tmpl.Execute(w, struct {
+			Sess      *sessions.Session
+			LastState string
+		}{
+			Sess: sess,
+			LastState: lastStateRawJson,
+		})
 		if err != nil {
 			_, _ = fmt.Fprintln(w, "unable to execute template: ", err)
 			return

@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"github.com/roessland/csgostate/cmd/csgostate-server/api"
 	"github.com/roessland/csgostate/cmd/csgostate-server/server"
 	"log"
@@ -16,7 +15,11 @@ func main() {
 	go api.ServeAPI(app)
 
 	for state := range app.StateListener.Updates {
-		fmt.Printf("%v\n", state)
+		//fmt.Printf("%v\n", state)
 		app.PlayerRepo.Update(&state)
+		err := app.StateRepo.Push(&state)
+		if err != nil {
+			log.Println("cannot push state to repo: ", err)
+		}
 	}
 }
