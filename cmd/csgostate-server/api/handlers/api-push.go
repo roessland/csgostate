@@ -1,22 +1,53 @@
 package handlers
 
 import (
-	"bytes"
+	"encoding/json"
 	"github.com/roessland/csgostate/cmd/csgostate-server/server"
-	"io"
+	"github.com/roessland/csgostate/csgostate"
 	"io/ioutil"
-	"log"
 	"net/http"
+	"time"
 )
 
 func GetApiPush(app *server.App) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
-		buf, err := ioutil.ReadAll(r.Body)
+		// Read body
+		body, err := ioutil.ReadAll(r.Body)
 		if err != nil {
-			log.Print(err)
+			app.Log.Errorw("error reading body", "err", err)
+			http.Error(w, "error reading body", http.StatusInternalServerError)
+			return
 		}
 
-		r.Body = io.NopCloser(bytes.NewReader(buf))
-		app.StateListener.HandlerFunc(w, r)
+		// Decode body
+		var state csgostate.State
+		state.RawJson = body
+		err = json.Unmarshal(body, &state)
+		if err != nil {
+			app.Log.Errorw("error unmarshalling body", "err", err)
+			http.Error(w, "error parsing body", http.StatusInternalServerError)
+			return
+		}
+
+		// Discard spectator player updates
+		if state.Provider.SteamID != state.Player.SteamID {
+			w.WriteHeader(http.StatusOK)
+			return
+		}
+
+		// Replace timestamp with server time to get a consistent view of things
+		// if client time is wrong.
+		state.Provider.Timestamp = int(time.Now().UTC().Unix())
+		err = app.StateRepo.Push(&state)
+		if err != nil {
+			app.Log.Errorw("error storing state", "err", err)
+			http.Error(w, "error storing state", http.StatusInternalServerError)
+			return
+		}
+
+		app.PlayerRepo.Update(&state)
+
+		// Success
+		w.Header().Set("Content-Type", "text/html")
 	}
 }

@@ -35,7 +35,7 @@ func ServeAPI(app *server.App) {
 	router.HandleFunc("/auth/logout", handlers.GetAuthLogout(app)).
 		Methods(http.MethodGet)
 
-	router.HandleFunc("/api/health", handlers.GetApiHealth()).
+	router.HandleFunc("/api/health", handlers.GetApiHealth(app)).
 		Methods(http.MethodGet)
 
 	router.HandleFunc("/api/push", handlers.GetApiPush(app)).
@@ -45,6 +45,11 @@ func ServeAPI(app *server.App) {
 		Methods(http.MethodGet)
 
 	router.HandleFunc("/gamestate_integration_csgostate.cfg", handlers.GetGamestateCfg(app)).
+		Methods(http.MethodGet)
+
+	adminRouter := router.PathPrefix("/admin").Subrouter()
+	adminRouter.Use(middleware.NewRequireAdminMiddleware(app))
+	adminRouter.HandleFunc("/debug", handlers.GetAdminDebug(app)).
 		Methods(http.MethodGet)
 
 	router.HandleFunc("/", handlers.GetIndex(app)).

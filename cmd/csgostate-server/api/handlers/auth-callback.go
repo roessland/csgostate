@@ -5,7 +5,6 @@ import (
 	"github.com/markbates/goth/gothic"
 	"github.com/roessland/csgostate/cmd/csgostate-server/repos/userrepo"
 	"github.com/roessland/csgostate/cmd/csgostate-server/server"
-	"log"
 	"net/http"
 )
 
@@ -14,6 +13,8 @@ func GetAuthCallback(app *server.App) func(w http.ResponseWriter, r *http.Reques
 		// Ask Steam API for user details
 		oauthUser, err := gothic.CompleteUserAuth(w, r)
 		if err != nil {
+			app.Log.Errorw("error completing steam auth",
+				"err", err)
 			http.Error(w, fmt.Sprintf("unable to fetch user details from Steam: %s", err), 500)
 			return
 		}
@@ -30,8 +31,11 @@ func GetAuthCallback(app *server.App) func(w http.ResponseWriter, r *http.Reques
 
 		user, err := app.UserRepo.GetBySteamID(oauthUser.UserID)
 		if err != nil {
-			log.Println("SteamID ", oauthUser.UserID)
-			http.Error(w, fmt.Sprintf("unable to get user: %s", err), 500)
+			app.Log.Errorw("error getting user",
+				"steamid", oauthUser.UserID,
+				"nickname", oauthUser.NickName,
+				"err", err)
+			http.Error(w, "error during auth callback", http.StatusInternalServerError)
 			return
 		}
 		if user == nil {
@@ -42,7 +46,11 @@ func GetAuthCallback(app *server.App) func(w http.ResponseWriter, r *http.Reques
 			}
 			err := app.UserRepo.Create(user)
 			if err != nil {
-				http.Error(w, fmt.Sprintf("unable to create user: %s", err), 500)
+				app.Log.Errorw("error creating user",
+					"steamid", oauthUser.UserID,
+					"nickname", oauthUser.NickName,
+					"err", err)
+				http.Error(w, "couldn't create a user", http.StatusInternalServerError)
 				return
 			}
 		}

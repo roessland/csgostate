@@ -6,7 +6,6 @@ import (
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
 	bolt "go.etcd.io/bbolt"
-	"sync"
 )
 
 type User struct {
@@ -20,6 +19,7 @@ type UserRepo interface {
 	GetBySteamID(steamID string) (*User, error)
 	GetByPushToken(pushToken string) (*User, error)
 	Create(user *User) error
+	GetAll() ([]User, error)
 }
 
 var _ UserRepo = &DBUserRepo{}
@@ -110,46 +110,25 @@ func (userRepo *DBUserRepo) Create(user *User) error {
 	return err
 }
 
-// verify that it satisfies interface
-var _ UserRepo = &InMemoryUserRepo{}
-
-type InMemoryUserRepo struct {
-	sync.RWMutex
-	users           map[string]*User
-	pushTokenSecret string
-}
-
-func NewInMemoryUserRepo(pushTokenSecret string) *InMemoryUserRepo {
-	return &InMemoryUserRepo{
-		users:           make(map[string]*User),
-		pushTokenSecret: pushTokenSecret,
-	}
-}
-
-func (userRepo *InMemoryUserRepo) GetBySteamID(steamID string) (*User, error) {
-	userRepo.RLock()
-	defer userRepo.RUnlock()
-	return userRepo.users[steamID], nil
-}
-
-func (userRepo *InMemoryUserRepo) GetByPushToken(pushToken string) (*User, error) {
-	userRepo.RLock()
-	defer userRepo.RUnlock()
-	for _, user := range userRepo.users {
-		if user.PushToken == pushToken {
-			return user, nil
+func (userRepo *DBUserRepo) GetAll() ([]User, error) {
+	var users []User
+	err := userRepo.db.View(func(tx *bolt.Tx) error {
+		bucket := tx.Bucket([]byte(usersBucket))
+		cursor := bucket.Cursor()
+		for key, value := cursor.First(); key != nil; key, value = cursor.Next() {
+			var u User
+			err := json.Unmarshal(value, &u)
+			if err != nil {
+				return errors.Wrapf(err, "when decoding %s", string(value))
+			}
+			users = append(users, u)
 		}
+		return nil
+	})
+	if err != nil {
+		return nil, err
 	}
-	return nil, nil
-}
-
-func (userRepo *InMemoryUserRepo) Create(user *User) error {
-	userRepo.Lock()
-	defer userRepo.Unlock()
-	user.PushToken = getPushToken(userRepo.pushTokenSecret, user.SteamID)
-	u := *user
-	userRepo.users[user.SteamID] = &u
-	return nil
+	return users, nil
 }
 
 func getPushToken(secret string, steamID string) string {

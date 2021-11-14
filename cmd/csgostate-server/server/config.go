@@ -1,6 +1,9 @@
 package server
 
-import "os"
+import (
+	"os"
+	"strings"
+)
 
 type Config struct {
 	// SessionSecret is used to encrypt session cookies.
@@ -16,6 +19,20 @@ type Config struct {
 	// authentication. Very hard to rotate this secret since the tokens
 	// are distributed in gamestate.cfg files on every users computer.
 	PushTokenSecret string
+
+	// Admins is a list of the SteamIDs of admin users.
+	Admins []string
+}
+
+func NewConfig() Config {
+	config := Config{}
+	config.URL = os.Getenv("CSGOSS_URL")
+	config.SessionSecret = os.Getenv("SESSION_SECRET")
+	config.SteamKey = os.Getenv("STEAM_KEY")
+	config.PushTokenSecret = os.Getenv("PUSH_TOKEN_SECRET")
+	config.Admins = strings.Split(os.Getenv("ADMINS"), ",")
+	config.Verify()
+	return config
 }
 
 func (config Config) Verify() {
@@ -36,12 +53,11 @@ func (config Config) Verify() {
 	}
 }
 
-func NewConfig() Config {
-	config := Config{}
-	config.URL = os.Getenv("CSGOSS_URL")
-	config.SessionSecret = os.Getenv("SESSION_SECRET")
-	config.SteamKey = os.Getenv("STEAM_KEY")
-	config.PushTokenSecret = os.Getenv("PUSH_TOKEN_SECRET")
-	config.Verify()
-	return config
+func (config Config) IsAdmin(steamID string) bool {
+	for _, adminSteamID := range config.Admins {
+		if adminSteamID == steamID && adminSteamID != "" {
+			return true
+		}
+	}
+	return false
 }
