@@ -39,7 +39,7 @@ func ServeAPI(app *server.App) {
 		Methods(http.MethodGet)
 
 	router.HandleFunc("/api/push", handlers.GetApiPush(app)).
-		Methods(http.MethodGet)
+		Methods(http.MethodPost)
 
 	router.HandleFunc("/api/players", handlers.GetApiPlayers(app)).
 		Methods(http.MethodGet)
