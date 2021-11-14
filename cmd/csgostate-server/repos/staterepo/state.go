@@ -15,6 +15,7 @@ type StateRepo interface {
 	GetLatest(steamID string) (*csgostate.State, error)
 	Push(state *csgostate.State) error
 	DebugJsonForPlayer(steamID string) error
+	GetAllForPlayer(steamID string) ([]csgostate.State, error)
 }
 
 var _ StateRepo = &DBStateRepo{}
@@ -140,4 +141,32 @@ func prettyPrintState(state *csgostate.State) string {
 		panic(err)
 	}
 	return string(buf)
+}
+
+func (stateRepo *DBStateRepo) GetAllForPlayer(steamID string) ([]csgostate.State, error) {
+	var states []csgostate.State
+	err := stateRepo.db.View(func(tx *bolt.Tx) error {
+		bucketName := getStatesBucketNameForUser(steamID)
+		bucket := tx.Bucket(bucketName)
+		if bucket == nil {
+			return nil
+		}
+
+		cursor := bucket.Cursor()
+		for key, val := cursor.First(); key != nil; key, val = cursor.Next() {
+			s := csgostate.State{}
+			err := json.Unmarshal(val, &s)
+			if err != nil {
+				return errors.Wrapf(err, "when decoding %s", string(val))
+			}
+			s.RawJson = make([]byte, len(val))
+			copy(s.RawJson, val)
+			states = append(states, s)
+		}
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+	return states, nil
 }

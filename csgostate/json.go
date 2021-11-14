@@ -76,14 +76,22 @@ type PlayerState struct {
 type PlayerWeapons map[string]Weapon
 
 type Weapon struct {
-	AmmoClip    *int   `json:"ammo_clip,omitempty"`
-	AmmoClipMax *int   `json:"ammo_clip_max,omitempty"`
-	AmmoReserve *int   `json:"ammo_reserve,omitempty"`
-	Name        string `json:"name"`
-	Paintkit    string `json:"paintkit"`
-	State       string `json:"state"` // "", "holstered" or "active"
-	Type        string `json:"type"`
+	AmmoClip    *int        `json:"ammo_clip,omitempty"`
+	AmmoClipMax *int        `json:"ammo_clip_max,omitempty"`
+	AmmoReserve *int        `json:"ammo_reserve,omitempty"`
+	Name        string      `json:"name"`
+	Paintkit    string      `json:"paintkit"`
+	State       WeaponState `json:"state"`
+	Type        string      `json:"type"`
 }
+
+// If a weapon is held and active is is either Active or Reloading.
+type WeaponState string
+
+const WeaponStateNil WeaponState = ""
+const WeaponStateHolstered WeaponState = "holstered"
+const WeaponStateActive WeaponState = "active"
+const WeaponStateReloading WeaponState = "reloading"
 
 type PlayerMatchStats struct {
 	Assists int `json:"assists"`
