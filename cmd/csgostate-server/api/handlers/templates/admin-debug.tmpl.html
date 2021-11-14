@@ -11,6 +11,7 @@
 {{if .Sess.IsLoggedIn}}
 <p>Logged in as: {{.Sess.NickName}}</p>
 <p><a href="/auth/logout">Log out</a></p>
+<p><a href="/gamestate_integration_csgostate.cfg?view=1">View config file</a></p>
 <p><a href="/gamestate_integration_csgostate.cfg">Download config file</a></p>
 {{else}}
 <p>
@@ -21,42 +22,6 @@
 </p>
 {{end}}
 
-<h2>What is CS:GO's gamestate integration?</h2>
-<p>CS:GO has builtin support for sharing some in-game information with external services. Some examples of shared
-    information:</p>
-<ul>
-    <li>Your own HP, ammo, weapon</li>
-    <li>The map you are playing on</li>
-    <li>The current score</li>
-    <li>If you are T side: Whether the bomb is planted or not</li>
-</ul>
-
-<p>Some examples of information that is NOT present in gamestate updates:</p>
-<ul>
-    <li>Any player location.</li>
-    <li>Any match, game, server or IP address information.</li>
-    <li>Exact bomb plant timing. This is intentionally fudged by the game to prevent using gamestate integration to
-        create bomb timers.
-    </li>
-</ul>
-<p>This is typically used for peripheral integrations such as lighting up your RGB keyboard when your health is low.</p>
-<p>More data is available if you are hosting or spectating a match, but if you are playing in the match
-    yourself the amount of data is very limited, so there is no cheating potential here, and no ban risk either.</p>
-<p>Enabling gamestate integration requires dropping a small config file in your CS:GO directory</p>
-
-<h2>How to use CS:GO State</h2>
-<ol>
-    <li>
-        First, sign in with Steam to register an account.
-    </li>
-    <li>Download your gamestate config file and move it to
-        <b>C:\Program Files (x86)\Steam\steamapps\common\Counter-Strike Global Offensive\csgo\cfg</b>.
-        You must restart CS:GO for changes in this directory to be detected by the game.
-    </li>
-    TODO mac linux
-    <li>That's it! Your gamestate changes will now be pushed to our API.</li>
-</ol>
-
 {{if .Sess.IsLoggedIn}}
 Your latest gamestate update was:
 <pre>
@@ -64,6 +29,8 @@ Your latest gamestate update was:
 </pre>
 {{end}}
 
+
+<p>All registered users:</p>
 {{range $val := .AllUsers}}
 <img width=50 height=50 src="{{$val.AvatarURL}}">{{$val.NickName}}<br>
 {{end}}

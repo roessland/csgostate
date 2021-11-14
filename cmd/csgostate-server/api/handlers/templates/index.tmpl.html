@@ -11,6 +11,7 @@
 {{if .Sess.IsLoggedIn}}
 <p>Logged in as: {{.Sess.NickName}}</p>
 <p><a href="/auth/logout">Log out</a></p>
+<p><a href="/gamestate_integration_csgostate.cfg?view=1">View config file</a></p>
 <p><a href="/gamestate_integration_csgostate.cfg">Download config file</a></p>
 {{else}}
 <p>
@@ -49,11 +50,18 @@
     <li>
         First, sign in with Steam to register an account.
     </li>
-    <li>Download your gamestate config file and move it to
-        <b>C:\Program Files (x86)\Steam\steamapps\common\Counter-Strike Global Offensive\csgo\cfg</b>.
+    <li>Download your gamestate config file and move it to this directory:
+        <ul>
+            <li>Windows: <b>C:\Program Files (x86)\Steam\steamapps\common\Counter-Strike Global Offensive\csgo\cfg</b>
+            </li>
+            <li>MacOS: <b>/Users/{USER}/Library/Application Support/Steam/steamapps/common/Counter-Strike Global
+                Offensive/csgo/cfg</b></li>
+        </ul>
         You must restart CS:GO for changes in this directory to be detected by the game.
+        Make sure the filename is <b>gamestate_integration_csgostate.cfg</b> and not <b>gamestate_integration_csgostate.cfg.txt</b>
+        or similar.
+        </ul>
     </li>
-    TODO mac linux
     <li>That's it! Your gamestate changes will now be pushed to our API.</li>
 </ol>
 

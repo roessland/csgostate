@@ -12,14 +12,12 @@ func main() {
 		log.Fatal(err)
 	}
 
-	go api.ServeAPI(app)
+	// For debugging JSON structure against recorded data.
+	//users, _ := app.UserRepo.GetAll()
+	//for _, user := range users {
+	//	fmt.Println(user.NickName)
+	//	app.Log.Info(app.StateRepo.DebugJsonForPlayer(user.SteamID))
+	//}
 
-	for state := range app.StateListener.Updates {
-		//fmt.Printf("%v\n", state)
-		app.PlayerRepo.Update(&state)
-		err := app.StateRepo.Push(&state)
-		if err != nil {
-			log.Println("cannot push state to repo: ", err)
-		}
-	}
+	api.ServeAPI(app)
 }

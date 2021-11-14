@@ -7,17 +7,20 @@ import (
 	"github.com/pkg/errors"
 	"github.com/roessland/csgostate/csgostate"
 	bolt "go.etcd.io/bbolt"
+	"io/ioutil"
+	"os"
 )
 
 type StateRepo interface {
 	GetLatest(steamID string) (*csgostate.State, error)
 	Push(state *csgostate.State) error
+	DebugJsonForPlayer(steamID string) error
 }
 
 var _ StateRepo = &DBStateRepo{}
 
 type DBStateRepo struct {
-	db              *bolt.DB
+	db *bolt.DB
 }
 
 func getStatesBucketNameForUser(steamID string) []byte {
@@ -26,7 +29,7 @@ func getStatesBucketNameForUser(steamID string) []byte {
 
 func NewDBStateRepo(db *bolt.DB) (*DBStateRepo, error) {
 	return &DBStateRepo{
-		db:              db,
+		db: db,
 	}, nil
 }
 
@@ -88,4 +91,53 @@ func itob(v uint64) []byte {
 	b := make([]byte, 8)
 	binary.BigEndian.PutUint64(b, v)
 	return b
+}
+
+func (stateRepo *DBStateRepo) DebugJsonForPlayer(steamID string) error {
+	return stateRepo.db.View(func(tx *bolt.Tx) error {
+		bucketName := getStatesBucketNameForUser(steamID)
+		bucket := tx.Bucket(bucketName)
+		if bucket == nil {
+			return nil
+		}
+
+		cursor := bucket.Cursor()
+		for key, val := cursor.First(); key != nil; key, val = cursor.Next() {
+			s := &csgostate.State{}
+			err := json.Unmarshal(val, &s)
+			if err != nil {
+				ioutil.WriteFile("whendecoding.txt", []byte(val), 0666)
+				return errors.Wrapf(err, "when decoding %s", string(val))
+			}
+			a := prettyPrintRawJson(val)
+			b := prettyPrintState(s)
+			if a != b {
+				ioutil.WriteFile("rawjson.txt", []byte(a), 0666)
+				ioutil.WriteFile("state.txt", []byte(b), 0666)
+				os.Exit(1337)
+			}
+		}
+		return nil
+	})
+}
+
+func prettyPrintRawJson(rawJson []byte) string {
+	var v map[string]interface{}
+	err := json.Unmarshal(rawJson, &v)
+	if err != nil {
+		panic(err)
+	}
+	buf, err := json.MarshalIndent(v, "", "  ")
+	if err != nil {
+		panic(err)
+	}
+	return string(buf)
+}
+
+func prettyPrintState(state *csgostate.State) string {
+	buf, err := json.MarshalIndent(state, "", "  ")
+	if err != nil {
+		panic(err)
+	}
+	return string(buf)
 }

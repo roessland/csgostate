@@ -35,6 +35,12 @@ func GetGamestateCfg(app *server.App) func(w http.ResponseWriter, r *http.Reques
 			return
 		}
 
+		view := r.URL.Query().Get("view")
+		if view == "" || view == "0" || view == "false" {
+			w.Header().Set("Content-Disposition", `attachment; filename=gamestate_integration_csgostate.cfg`)
+
+		}
+
 		err = tmpl.Execute(w, struct {
 			Sess *sessions.Session
 			User *userrepo.User
