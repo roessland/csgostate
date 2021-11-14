@@ -38,7 +38,6 @@ func (stateRepo *DBStateRepo) GetLatest(steamID string) (*csgostate.State, error
 		if bucket == nil {
 			return nil
 		}
-		fmt.Println("getlatest bucketname", bucketName)
 
 		cursor := bucket.Cursor()
 		key, val := cursor.Last()

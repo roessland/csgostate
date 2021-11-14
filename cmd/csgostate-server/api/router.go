@@ -8,7 +8,6 @@ import (
 	"github.com/roessland/csgostate/cmd/csgostate-server/api/handlers"
 	"github.com/roessland/csgostate/cmd/csgostate-server/api/middleware"
 	"github.com/roessland/csgostate/cmd/csgostate-server/server"
-	"log"
 	"net/http"
 	"time"
 )
@@ -22,6 +21,8 @@ func ServeAPI(app *server.App) {
 	}
 
 	router := mux.NewRouter()
+
+	router.Use(middleware.NewRequestIDMiddleware(app))
 
 	router.Use(middleware.NewRequestResponseLoggingMiddleware(app))
 
@@ -46,11 +47,11 @@ func ServeAPI(app *server.App) {
 	router.HandleFunc("/gamestate_integration_csgostate.cfg", handlers.GetGamestateCfg(app)).
 		Methods(http.MethodGet)
 
-	router.HandleFunc("/", handlers.Index(app)).
+	router.HandleFunc("/", handlers.GetIndex(app)).
 		Methods(http.MethodGet)
 
 	// Catch-all for remaining requests. Must be last.
-	router.PathPrefix("/").HandlerFunc(handlers.Static()).
+	router.PathPrefix("/").HandlerFunc(handlers.GetStatic()).
 		Methods(http.MethodGet)
 
 	srv := &http.Server{
@@ -60,7 +61,6 @@ func ServeAPI(app *server.App) {
 		ReadTimeout:  15 * time.Second,
 	}
 
-	log.Printf("listening to %s", srv.Addr)
-	log.Print(srv.ListenAndServe())
+	app.Log.Infof("listening to %s", srv.Addr)
+	app.Log.Infow("server closed", "err", srv.ListenAndServe())
 }
-
