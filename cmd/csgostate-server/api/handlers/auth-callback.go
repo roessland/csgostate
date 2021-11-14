@@ -9,7 +9,7 @@ import (
 	"net/http"
 )
 
-func AuthCallback(app *server.App) func(w http.ResponseWriter, r *http.Request) {
+func GetAuthCallback(app *server.App) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// Ask Steam API for user details
 		oauthUser, err := gothic.CompleteUserAuth(w, r)

@@ -6,6 +6,7 @@ import (
 	"github.com/markbates/goth/gothic"
 	"github.com/markbates/goth/providers/steam"
 	"github.com/roessland/csgostate/cmd/csgostate-server/api/handlers"
+	"github.com/roessland/csgostate/cmd/csgostate-server/api/middleware"
 	"github.com/roessland/csgostate/cmd/csgostate-server/server"
 	"log"
 	"net/http"
@@ -22,17 +23,35 @@ func ServeAPI(app *server.App) {
 
 	router := mux.NewRouter()
 
-	router.HandleFunc("/auth/login", handlers.AuthLogin())
-	router.HandleFunc("/auth/callback", handlers.AuthCallback(app))
-	router.HandleFunc("/auth/logout", handlers.AuthLogout(app))
-	router.HandleFunc("/api/health", handlers.ApiHealth())
-	router.HandleFunc("/api/push", handlers.ApiPush(app))
-	router.HandleFunc("/api/players", handlers.ApiPlayers(app))
-	router.HandleFunc("/gamestate_integration_csgostate.cfg", handlers.GamestateCfg(app))
-	router.HandleFunc("/", handlers.Index(app))
+	router.Use(middleware.NewRequestResponseLoggingMiddleware(app))
+
+	router.HandleFunc("/auth/login", handlers.GetAuthLogin()).
+		Methods(http.MethodGet)
+
+	router.HandleFunc("/auth/callback", handlers.GetAuthCallback(app)).
+		Methods(http.MethodGet)
+
+	router.HandleFunc("/auth/logout", handlers.GetAuthLogout(app)).
+		Methods(http.MethodGet)
+
+	router.HandleFunc("/api/health", handlers.GetApiHealth()).
+		Methods(http.MethodGet)
+
+	router.HandleFunc("/api/push", handlers.GetApiPush(app)).
+		Methods(http.MethodGet)
+
+	router.HandleFunc("/api/players", handlers.GetApiPlayers(app)).
+		Methods(http.MethodGet)
+
+	router.HandleFunc("/gamestate_integration_csgostate.cfg", handlers.GetGamestateCfg(app)).
+		Methods(http.MethodGet)
+
+	router.HandleFunc("/", handlers.Index(app)).
+		Methods(http.MethodGet)
 
 	// Catch-all for remaining requests. Must be last.
-	router.PathPrefix("/").HandlerFunc(handlers.Static())
+	router.PathPrefix("/").HandlerFunc(handlers.Static()).
+		Methods(http.MethodGet)
 
 	srv := &http.Server{
 		Handler:      router,

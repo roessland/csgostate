@@ -13,13 +13,13 @@ func Index(app *server.App) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		sess, err := app.SessionStore.Get(r)
 		if err != nil {
-			_, _ = fmt.Fprintln(w, "unable to get session")
+			http.Error(w, fmt.Sprintf("unable to get session: %s", err), http.StatusInternalServerError)
 			return
 		}
 
 		tmpl, err := template.ParseFS(templates, "templates/index.tmpl.html")
 		if err != nil {
-			_, _ = fmt.Fprintln(w, "unable to load template: ", err)
+			http.Error(w, fmt.Sprintf("unable to load template: %s", err), http.StatusInternalServerError)
 			return
 		}
 
@@ -43,7 +43,7 @@ func Index(app *server.App) func(w http.ResponseWriter, r *http.Request) {
 			LastState: lastStateRawJson,
 		})
 		if err != nil {
-			_, _ = fmt.Fprintln(w, "unable to execute template: ", err)
+			http.Error(w, fmt.Sprintf("unable to execute template: %s", err), http.StatusInternalServerError)
 			return
 		}
 	}

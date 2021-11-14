@@ -6,7 +6,7 @@ import (
 	"net/http"
 )
 
-func AuthLogout(app *server.App) func(w http.ResponseWriter, r *http.Request) {
+func GetAuthLogout(app *server.App) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		gothic.Logout(w, r)
 		sess, _ := app.SessionStore.New(r)

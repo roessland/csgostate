@@ -6,7 +6,7 @@ import (
 	"net/http"
 )
 
-func ApiHealth() func(w http.ResponseWriter, r *http.Request) {
+func GetApiHealth() func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// an example API handler
 		w.Header().Set("Cache-Control", "no-cache, private, max-age=0")

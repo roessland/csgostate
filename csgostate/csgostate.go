@@ -98,7 +98,6 @@ func (listener *Listener) postHandler(w http.ResponseWriter, r *http.Request) {
 	change.Provider.Timestamp = int(time.Now().UTC().Unix())
 
 	w.Header().Set("Content-Type", "text/html")
-	w.WriteHeader(http.StatusOK)
 }
 
 func (listener *Listener) HandlerFunc(w http.ResponseWriter, r *http.Request) {

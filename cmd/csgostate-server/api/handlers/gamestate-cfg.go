@@ -9,7 +9,7 @@ import (
 	"text/template"
 )
 
-func GamestateCfg(app *server.App) func(w http.ResponseWriter, r *http.Request) {
+func GetGamestateCfg(app *server.App) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		sess, err := app.SessionStore.Get(r)
 		if err != nil {

@@ -9,7 +9,7 @@ import (
 	"net/http"
 )
 
-func ApiPush(app *server.App) func(w http.ResponseWriter, r *http.Request) {
+func GetApiPush(app *server.App) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		buf, err := ioutil.ReadAll(r.Body)
 		if err != nil {

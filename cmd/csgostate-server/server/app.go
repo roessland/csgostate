@@ -1,6 +1,7 @@
 package server
 
 import (
+	"github.com/roessland/csgostate/cmd/csgostate-server/logger"
 	"github.com/roessland/csgostate/cmd/csgostate-server/repos/playerrepo"
 	"github.com/roessland/csgostate/cmd/csgostate-server/repos/staterepo"
 	"github.com/roessland/csgostate/cmd/csgostate-server/repos/userrepo"
@@ -12,6 +13,7 @@ import (
 
 type App struct {
 	Config          Config
+	Log             logger.Logger
 	SteamHTTPClient *http.Client
 	SessionStore    *sessions.SessionStore
 	DB              *bolt.DB
@@ -28,6 +30,11 @@ func NewApp(config Config) (*App, error) {
 
 	app.Config = config
 
+	app.Log, err = logger.NewLogger()
+	if err != nil {
+		return nil, err
+	}
+
 	app.SessionStore = sessions.NewSessionStore([]byte(app.Config.SessionSecret))
 
 	app.DB, err = bolt.Open("csgostate.db", 0666, nil)
@@ -35,7 +42,7 @@ func NewApp(config Config) (*App, error) {
 		return nil, err
 	}
 
-	app.PlayerRepo = playerrepo.NewPlayerRepo()
+	app.PlayerRepo = playerrepo.NewInMemoryPlayerRepo()
 
 	app.UserRepo, err = userrepo.NewDBUserRepo(app.DB, app.Config.PushTokenSecret)
 	if err != nil {
@@ -53,4 +60,5 @@ func NewApp(config Config) (*App, error) {
 
 func (app *App) Close() {
 	_ = app.DB.Close()
+	_ = app.Log.Sync()
 }

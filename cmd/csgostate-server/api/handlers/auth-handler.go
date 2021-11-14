@@ -5,7 +5,7 @@ import (
 	"net/http"
 )
 
-func AuthLogin() func(w http.ResponseWriter, r *http.Request) {
+func GetAuthLogin() func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		gothic.BeginAuthHandler(w, r)
 	}

@@ -16,7 +16,7 @@ var _ PlayerRepo = InMemoryPlayerRepo{}
 
 type InMemoryPlayerRepo map[string]*Player
 
-func NewPlayerRepo() InMemoryPlayerRepo {
+func NewInMemoryPlayerRepo() InMemoryPlayerRepo {
 	return make(map[string]*Player)
 }
 

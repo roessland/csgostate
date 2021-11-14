@@ -7,9 +7,8 @@ import (
 	"net/http"
 )
 
-func ApiPlayers(app *server.App) func(w http.ResponseWriter, r *http.Request) {
+func GetApiPlayers(app *server.App) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
-		// an example API handler
 		w.Header().Set("Cache-Control", "no-cache, private, max-age=0")
 		err := json.NewEncoder(w).Encode(app.PlayerRepo.GetAll())
 		if err != nil {
