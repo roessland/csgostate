@@ -6,10 +6,9 @@ import (
 	"github.com/roessland/csgostate/csgostate"
 	"io/ioutil"
 	"net/http"
-	"time"
 )
 
-func GetApiPush(app *server.App) func(w http.ResponseWriter, r *http.Request) {
+func PostApiPush(app *server.App) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// Read body
 		body, err := ioutil.ReadAll(r.Body)
@@ -35,9 +34,7 @@ func GetApiPush(app *server.App) func(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		// Replace timestamp with server time to get a consistent view of things
-		// if client time is wrong.
-		state.Provider.Timestamp = int(time.Now().UTC().Unix())
+		// Save event to DB
 		err = app.StateRepo.Push(&state)
 		if err != nil {
 			app.Log.Errorw("error storing state", "err", err)
@@ -45,6 +42,15 @@ func GetApiPush(app *server.App) func(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
+		// Feed to player events extractor
+		err = app.PlayerEventsExtractor.Feed(&state)
+		if err != nil {
+			app.Log.Errorw("error feeding PlayerEventsExtractor", "err", err)
+			http.Error(w, "error parsing state", http.StatusInternalServerError)
+			return
+		}
+
+		// Update PlayerRepo
 		app.PlayerRepo.Update(&state)
 
 		// Success

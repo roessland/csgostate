@@ -2,6 +2,7 @@ package server
 
 import (
 	"github.com/roessland/csgostate/cmd/csgostate-server/logger"
+	"github.com/roessland/csgostate/cmd/csgostate-server/playerevents"
 	"github.com/roessland/csgostate/cmd/csgostate-server/repos/playerrepo"
 	"github.com/roessland/csgostate/cmd/csgostate-server/repos/staterepo"
 	"github.com/roessland/csgostate/cmd/csgostate-server/repos/userrepo"
@@ -12,15 +13,16 @@ import (
 )
 
 type App struct {
-	Config          Config
-	Log             logger.Logger
-	SteamHTTPClient *http.Client
-	SessionStore    *sessions.SessionStore
-	DB              *bolt.DB
-	UserRepo        userrepo.UserRepo
-	PlayerRepo      playerrepo.PlayerRepo
-	StateRepo       staterepo.StateRepo
-	StateListener   *csgostate.Listener
+	Config                Config
+	Log                   logger.Logger
+	SteamHTTPClient       *http.Client
+	SessionStore          *sessions.SessionStore
+	DB                    *bolt.DB
+	UserRepo              userrepo.UserRepo
+	PlayerRepo            playerrepo.PlayerRepo
+	StateRepo             staterepo.StateRepo
+	StateListener         *csgostate.Listener
+	PlayerEventsExtractor *playerevents.Extractor
 }
 
 func NewApp(config Config) (*App, error) {
@@ -55,6 +57,9 @@ func NewApp(config Config) (*App, error) {
 	}
 
 	app.StateListener = csgostate.NewListener()
+
+	app.PlayerEventsExtractor = playerevents.NewExtractor()
+
 	return app, nil
 }
 

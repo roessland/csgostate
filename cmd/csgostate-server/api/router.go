@@ -38,7 +38,7 @@ func ServeAPI(app *server.App) {
 	router.HandleFunc("/api/health", handlers.GetApiHealth(app)).
 		Methods(http.MethodGet)
 
-	router.HandleFunc("/api/push", handlers.GetApiPush(app)).
+	router.HandleFunc("/api/push", handlers.PostApiPush(app)).
 		Methods(http.MethodPost)
 
 	router.HandleFunc("/api/players", handlers.GetApiPlayers(app)).

@@ -3,8 +3,8 @@ package main
 import (
 	"fmt"
 	"github.com/roessland/csgostate/cmd/csgostate-server/api"
+	"github.com/roessland/csgostate/cmd/csgostate-server/playerevents"
 	"github.com/roessland/csgostate/cmd/csgostate-server/server"
-	"github.com/roessland/csgostate/csgostate"
 	"log"
 )
 
@@ -14,53 +14,47 @@ func main() {
 		log.Fatal(err)
 	}
 
-	// For debugging JSON structure against recorded data.
+	registerEventHandlers(app)
+
+	// debugEventHandlers(app)
+
+	api.ServeAPI(app)
+}
+
+func registerEventHandlers(app *server.App) {
+	playerevents.Died.Register(func(payload playerevents.DiedPayload) {
+		app.Log.Infow("",
+			"event", playerevents.Died.String(),
+			"nick", payload.PrevState.Player.Name)
+	})
+
+	playerevents.DiedReloading.Register(func(payload playerevents.DiedReloadingPayload) {
+		app.Log.Infow("",
+			"event", playerevents.DiedReloading.String(),
+			"nick", payload.PrevState.Player.Name)
+	})
+
+	playerevents.Appeared.Register(func(payload playerevents.AppearedPayload) {
+		app.Log.Infow("",
+			"event", playerevents.Appeared.String(),
+			"nick", payload.CurrState.Player.Name)
+	})
+}
+
+// debugEventHandlers feeds all states in database to the player events extractor.
+func debugEventHandlers(app *server.App) {
 	users, _ := app.UserRepo.GetAll()
 	for _, user := range users {
 		fmt.Println(user.NickName)
-		app.Log.Info(app.StateRepo.DebugJsonForPlayer(user.SteamID))
-	}
-
-	// For debugging JSON structure against recorded data.
-	for _, user := range users {
-		states, _ := app.StateRepo.GetAllForPlayer(user.SteamID)
-		for i := 1; i < len(states); i++ {
-			prevState := states[i-1]
-			state := states[i]
-
-			if prevState.Player == nil || state.Player == nil {
-				continue
-			}
-
-			if prevState.Player.State == nil || state.Player.State == nil {
-				continue
-			}
-
-			if prevState.Provider == nil || state.Provider == nil {
-				continue
-			}
-
-			if prevState.Player.SteamID != prevState.Provider.SteamID || state.Player.SteamID != state.Provider.SteamID {
-				continue
-			}
-
-			// Find active weapon in prevState
-			var activeWeapon csgostate.Weapon
-			for _, weap := range *prevState.Player.Weapons {
-				if weap.State == csgostate.WeaponStateActive || weap.State == csgostate.WeaponStateReloading {
-					activeWeapon = weap
-				}
-			}
-
-			if prevState.Player.State.Health > 0 && state.Player.State.Health == 0 {
-				fmt.Println(state.Player.Name,
-					" died on ", state.Map.Name,
-					" gamemode ", state.Map.Mode,
-					activeWeapon.State, activeWeapon.Name,
-					" score ", prevState.Map.TeamCT.Score, "-", prevState.Map.TeamT.Score)
+		states, err := app.StateRepo.GetAllForPlayer(user.SteamID)
+		if err != nil {
+			panic(err)
+		}
+		for i, _ := range states {
+			err = app.PlayerEventsExtractor.Feed(&states[i])
+			if err != nil {
+				panic(err)
 			}
 		}
 	}
-
-	api.ServeAPI(app)
 }
