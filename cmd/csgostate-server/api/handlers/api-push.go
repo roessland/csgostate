@@ -28,12 +28,6 @@ func PostApiPush(app *server.App) func(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		// Discard spectator player updates
-		if state.Provider.SteamID != state.Player.SteamID {
-			w.WriteHeader(http.StatusOK)
-			return
-		}
-
 		// Save event to DB
 		err = app.StateRepo.Push(&state)
 		if err != nil {

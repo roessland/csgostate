@@ -28,3 +28,18 @@ func (e *appeared) Trigger(payload AppearedPayload) {
 		go handler(payload)
 	}
 }
+
+func extractAppeared(prevState, currState *csgostate.State) error {
+	lastEventTime := 0
+	if prevState != nil {
+		lastEventTime = prevState.Provider.Timestamp
+	}
+	secondsSincePrevState := currState.Provider.Timestamp - lastEventTime
+	if secondsSincePrevState > 120 {
+		Appeared.Trigger(AppearedPayload{
+			PrevState: prevState,
+			CurrState: currState,
+		})
+	}
+	return nil
+}

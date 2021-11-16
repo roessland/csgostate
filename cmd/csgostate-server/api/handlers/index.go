@@ -25,7 +25,7 @@ func GetIndex(app *server.App) func(w http.ResponseWriter, r *http.Request) {
 
 		var lastStateRawJson string
 		if sess.IsLoggedIn() {
-			lastState, err := app.StateRepo.GetLatest(sess.SteamID())
+			lastState, err := app.StateRepo.GetLatestForPlayer(sess.SteamID())
 			if err != nil {
 				app.Log.Errorw("error getting latest state for steamid",
 					"steamid", sess.SteamID(),

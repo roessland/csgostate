@@ -28,3 +28,47 @@ func (e *died) Trigger(payload DiedPayload) {
 		go handler(payload)
 	}
 }
+
+
+func extractDied(prevState, currState *csgostate.State) error {
+	if prevState == nil {
+		// This cannot be the first event
+		return nil
+	}
+
+	if prevState.Player == nil {
+		// Was not playing
+		return nil
+	}
+
+	if prevState.Player.State == nil {
+		// Was not playing
+		return nil
+	}
+
+	if prevState.Player.SteamID != prevState.Provider.SteamID {
+		// Was spectating someone
+		return nil
+	}
+
+	if prevState.Player.State.Health == 0 {
+		// Was already dead
+		return nil
+	}
+
+	if currState.Player != nil && currState.Player.Activity == csgostate.PlayerActivityMenu {
+		// Left the game
+	}
+
+	if prevState.Player.State.Health > 0 && (
+		currState.Player == nil ||
+			currState.Player.SteamID != currState.Provider.SteamID ||
+			currState.Player.State == nil ||
+			currState.Player.State.Health == 0) {
+		Died.Trigger(DiedPayload{
+			PrevState: prevState,
+			CurrState: currState,
+		})
+	}
+	return nil
+}

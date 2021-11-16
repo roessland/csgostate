@@ -32,7 +32,7 @@ type Map struct {
 }
 
 type Player struct {
-	Activity     string            `json:"activity,omitempty"`
+	Activity     PlayerActivity    `json:"activity,omitempty"`
 	Clan         string            `json:"clan,omitempty"`
 	MatchStats   *PlayerMatchStats `json:"match_stats,omitempty"`
 	Name         string            `json:"name,omitempty"`
@@ -42,6 +42,13 @@ type Player struct {
 	Team         string            `json:"team,omitempty"`
 	Weapons      *PlayerWeapons    `json:"weapons,omitempty"`
 }
+
+const PlayerNameUnconnected = "unconnected"
+
+type PlayerActivity string
+
+const PlayerActivityPlaying PlayerActivity = "playing"
+const PlayerActivityMenu PlayerActivity = "menu"
 
 type Provider struct {
 	AppID     int    `json:"appid"`

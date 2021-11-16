@@ -57,56 +57,21 @@ func extractAll(prevState, currState *csgostate.State) error {
 		return errors.Wrap(err, "error extracting appeared event")
 	}
 
+	err = extractSpawned(prevState, currState)
+	if err != nil {
+		return errors.Wrap(err, "error extracting spawned event")
+	}
+
+	err = extractSpectating(prevState, currState)
+	if err != nil {
+		return errors.Wrap(err, "error extracting spectating event")
+	}
+
 	err = extractDied(prevState, currState)
 	if err != nil {
 		return errors.Wrap(err, "error extracting died event")
 	}
 
-	return nil
-}
-
-func extractAppeared(prevState, currState *csgostate.State) error {
-	lastEventTime := 0
-	if prevState != nil {
-		lastEventTime = prevState.Provider.Timestamp
-	}
-	secondsSincePrevState := currState.Provider.Timestamp - lastEventTime
-	if secondsSincePrevState > 120 {
-		Appeared.Trigger(AppearedPayload{
-			PrevState: prevState,
-			CurrState: currState,
-		})
-	}
-	return nil
-}
-
-func extractDied(prevState, currState *csgostate.State) error {
-	if prevState == nil {
-		return nil
-	}
-
-	if prevState.Player == nil || currState.Player == nil {
-		return nil
-	}
-
-	if prevState.Player.State == nil || currState.Player.State == nil {
-		return nil
-	}
-
-	if prevState.Player.SteamID != prevState.Provider.SteamID {
-		return nil
-	}
-
-	if prevState.Player.SteamID != currState.Player.SteamID {
-		return nil
-	}
-
-	if prevState.Player.State.Health > 0 && currState.Player.State.Health == 0 {
-		Died.Trigger(DiedPayload{
-			PrevState: prevState,
-			CurrState: currState,
-		})
-	}
 	return nil
 }
 
