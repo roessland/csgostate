@@ -1,10 +1,10 @@
 package main
 
 import (
-	"fmt"
 	"github.com/roessland/csgostate/cmd/csgostate-server/api"
 	"github.com/roessland/csgostate/cmd/csgostate-server/playerevents"
 	"github.com/roessland/csgostate/cmd/csgostate-server/server"
+	_ "github.com/roessland/csgostate/cmd/csgostate-server/teamevents"
 	"log"
 	"time"
 )
@@ -17,7 +17,7 @@ func main() {
 
 	registerEventHandlers(app)
 
-	//debugEventHandlers(app)
+	debugEventHandlers(app)
 
 	api.ServeAPI(app)
 }
@@ -58,14 +58,12 @@ func debugEventHandlers(app *server.App) {
 	if err != nil {
 		panic(err)
 	}
-	fmt.Print(len(states))
-	for i, _ := range states {
-		//s := states[i]
-		//if s.Provider.Timestamp < 1636919279 || 1636919287 < s.Provider.Timestamp {
-		//continue
-		//}
-		//fmt.Println(string(s.RawJson))
-		time.Sleep(time.Millisecond * 30)
+	for i := 1; i < len(states); i++ {
+		sleepMillis := (states[i].Provider.Timestamp - states[i-1].Provider.Timestamp) * 2
+		if sleepMillis > 10 {
+			sleepMillis = 100
+		}
+		time.Sleep(time.Duration(sleepMillis) * time.Millisecond)
 
 		err = app.PlayerEventsExtractor.Feed(&states[i])
 		if err != nil {

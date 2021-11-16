@@ -16,7 +16,7 @@ type spectating struct {
 }
 
 func (e *spectating) String() string {
-	return "spectating"
+	return "player_spectating"
 }
 
 func (e *spectating) Register(handler func(payload SpectatingPayload)) {

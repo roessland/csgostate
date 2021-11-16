@@ -16,7 +16,7 @@ type died struct {
 }
 
 func (e *died) String() string {
-	return "died"
+	return "player_died"
 }
 
 func (e *died) Register(handler func(payload DiedPayload)) {

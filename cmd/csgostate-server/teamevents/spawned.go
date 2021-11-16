@@ -1,4 +1,4 @@
-package playerevents
+package teamevents
 
 import (
 	"github.com/roessland/csgostate/csgostate"
@@ -16,7 +16,7 @@ type spawned struct {
 }
 
 func (e *spawned) String() string {
-	return "player_spawned"
+	return "team_spawned"
 }
 
 func (e *spawned) Register(handler func(payload SpawnedPayload)) {

@@ -16,7 +16,7 @@ type appeared struct {
 }
 
 func (e *appeared) String() string {
-	return "appeared"
+	return "player_appeared"
 }
 
 func (e *appeared) Register(handler func(payload AppearedPayload)) {
