@@ -5,9 +5,7 @@ import (
 	"github.com/roessland/csgostate/cmd/csgostate-server/api"
 	"github.com/roessland/csgostate/cmd/csgostate-server/playerevents"
 	"github.com/roessland/csgostate/cmd/csgostate-server/server"
-	"github.com/roessland/csgostate/csgostate"
 	"log"
-	"sort"
 	"time"
 )
 
@@ -18,8 +16,6 @@ func main() {
 	}
 
 	registerEventHandlers(app)
-
-	migrateDb(app)
 
 	//debugEventHandlers(app)
 
@@ -72,33 +68,6 @@ func debugEventHandlers(app *server.App) {
 		time.Sleep(time.Millisecond * 30)
 
 		err = app.PlayerEventsExtractor.Feed(&states[i])
-		if err != nil {
-			panic(err)
-		}
-	}
-}
-
-// debugEventHandlers feeds all states in database to the player events extractor.
-func migrateDb(app *server.App) {
-	var allStates []csgostate.State
-	users, _ := app.UserRepo.GetAll()
-	for _, user := range users {
-		fmt.Println(user.NickName)
-		states, err := app.StateRepo.GetAllForPlayer(user.SteamID)
-		if err != nil {
-			panic(err)
-		}
-		allStates = append(allStates, states...)
-	}
-
-	sort.Slice(allStates, func(i, j int) bool {
-		return allStates[i].Provider.Timestamp < allStates[j].Provider.Timestamp
-	})
-
-	fmt.Println("inserting", len(allStates), "allstates")
-
-	for i, _ := range allStates {
-		err := app.StateRepo.PushMigrate(&allStates[i])
 		if err != nil {
 			panic(err)
 		}

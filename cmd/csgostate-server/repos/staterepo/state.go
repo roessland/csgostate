@@ -15,7 +15,6 @@ type StateRepo interface {
 	GetLatest() (*csgostate.State, error)
 	GetLatestForPlayer(steamID string) (*csgostate.State, error)
 	Push(state *csgostate.State) error
-	PushMigrate(state *csgostate.State) error
 	DebugJsonForPlayer(steamID string) error
 	GetAllForPlayer(steamID string) ([]csgostate.State, error)
 	GetAll() ([]csgostate.State, error)
@@ -137,29 +136,6 @@ func (stateRepo *DBStateRepo) Push(state *csgostate.State) error {
 				return err
 			}
 			err = userBucket.Put(itob(id), state.RawJson)
-			if err != nil {
-				return err
-			}
-		}
-		return nil
-	})
-	return err
-}
-
-func (stateRepo *DBStateRepo) PushMigrate(state *csgostate.State) error {
-	// Store the user in the user bucket using the SteamID as the key.
-	err := stateRepo.db.Update(func(tx *bolt.Tx) error {
-		// states
-		{
-			bucket, err := tx.CreateBucketIfNotExists(statesBucketName)
-			if err != nil {
-				return err
-			}
-			id, err := bucket.NextSequence()
-			if err != nil {
-				return err
-			}
-			err = bucket.Put(itob(id), state.RawJson)
 			if err != nil {
 				return err
 			}
