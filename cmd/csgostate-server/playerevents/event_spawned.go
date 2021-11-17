@@ -1,10 +1,8 @@
-package teamevents
+package playerevents
 
 import (
 	"github.com/roessland/csgostate/csgostate"
 )
-
-var Spawned spawned
 
 type SpawnedPayload struct {
 	PrevState *csgostate.State
@@ -16,7 +14,7 @@ type spawned struct {
 }
 
 func (e *spawned) String() string {
-	return "team_spawned"
+	return "player_spawned"
 }
 
 func (e *spawned) Register(handler func(payload SpawnedPayload)) {
@@ -29,7 +27,7 @@ func (e *spawned) Trigger(payload SpawnedPayload) {
 	}
 }
 
-func extractSpawned(prevState, currState *csgostate.State) error {
+func (e *spawned) extractFromStateDiff(prevState, currState *csgostate.State) error {
 	if prevState == nil {
 		// Should never happen
 		return nil
@@ -55,7 +53,7 @@ func extractSpawned(prevState, currState *csgostate.State) error {
 		prevState.Player.SteamID != currState.Provider.SteamID ||
 		(prevState.Player != nil && prevState.Player.State.Health == 0 && currState.Player.State.Health > 0) {
 		// Not already playing or not already alive.
-		Spawned.Trigger(SpawnedPayload{
+		e.Trigger(SpawnedPayload{
 			PrevState: prevState,
 			CurrState: currState,
 		})

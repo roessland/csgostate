@@ -4,8 +4,6 @@ import (
 	"github.com/roessland/csgostate/csgostate"
 )
 
-var Appeared appeared
-
 type AppearedPayload struct {
 	PrevState *csgostate.State
 	CurrState *csgostate.State
@@ -29,14 +27,14 @@ func (e *appeared) Trigger(payload AppearedPayload) {
 	}
 }
 
-func extractAppeared(prevState, currState *csgostate.State) error {
+func (e *appeared) extractFromStateDiff(prevState, currState *csgostate.State) error {
 	lastEventTime := 0
 	if prevState != nil {
 		lastEventTime = prevState.Provider.Timestamp
 	}
 	secondsSincePrevState := currState.Provider.Timestamp - lastEventTime
 	if secondsSincePrevState > 120 {
-		Appeared.Trigger(AppearedPayload{
+		e.Trigger(AppearedPayload{
 			PrevState: prevState,
 			CurrState: currState,
 		})

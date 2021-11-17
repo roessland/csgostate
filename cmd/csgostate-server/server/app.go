@@ -1,12 +1,14 @@
 package server
 
 import (
+	"github.com/roessland/csgostate/cmd/csgostate-server/discord"
 	"github.com/roessland/csgostate/cmd/csgostate-server/logger"
 	"github.com/roessland/csgostate/cmd/csgostate-server/playerevents"
 	"github.com/roessland/csgostate/cmd/csgostate-server/repos/playerrepo"
 	"github.com/roessland/csgostate/cmd/csgostate-server/repos/staterepo"
 	"github.com/roessland/csgostate/cmd/csgostate-server/repos/userrepo"
 	"github.com/roessland/csgostate/cmd/csgostate-server/sessions"
+	"github.com/roessland/csgostate/cmd/csgostate-server/teamevents"
 	"github.com/roessland/csgostate/csgostate"
 	bolt "go.etcd.io/bbolt"
 	"net/http"
@@ -18,11 +20,16 @@ type App struct {
 	SteamHTTPClient       *http.Client
 	SessionStore          *sessions.SessionStore
 	DB                    *bolt.DB
+	Discord               *discord.Client
 	UserRepo              userrepo.UserRepo
 	PlayerRepo            playerrepo.PlayerRepo
 	StateRepo             staterepo.StateRepo
 	StateListener         *csgostate.Listener
+	PlayerEvents          *playerevents.EventRepo
 	PlayerEventsExtractor *playerevents.Extractor
+	TeamEvents            *teamevents.EventRepo
+	TeamAssembler         *teamevents.TeamAssembler
+	TeamsRepo             *teamevents.TeamsRepo
 }
 
 func NewApp(config Config) (*App, error) {
@@ -44,6 +51,8 @@ func NewApp(config Config) (*App, error) {
 		return nil, err
 	}
 
+	app.Discord = discord.NewClient(app.Config.DiscordWebhookURL)
+
 	app.PlayerRepo = playerrepo.NewInMemoryPlayerRepo()
 
 	app.UserRepo, err = userrepo.NewDBUserRepo(app.DB, app.Config.PushTokenSecret)
@@ -57,8 +66,11 @@ func NewApp(config Config) (*App, error) {
 	}
 
 	app.StateListener = csgostate.NewListener()
-
-	app.PlayerEventsExtractor = playerevents.NewExtractor()
+	app.PlayerEvents = playerevents.NewRepo()
+	app.PlayerEventsExtractor = playerevents.NewExtractor(app.PlayerEvents)
+	app.TeamEvents = teamevents.NewRepo()
+	app.TeamAssembler = teamevents.NewTeamAssembler(app.PlayerEvents, app.TeamEvents)
+	app.TeamsRepo = teamevents.NewTeamsRepo(app.TeamAssembler, app.TeamEvents, app.PlayerEvents)
 
 	return app, nil
 }

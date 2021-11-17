@@ -7,8 +7,7 @@ type Logger struct {
 }
 
 func NewLogger() (Logger, error) {
-	zap.NewProductionConfig()
-	config := zap.NewProductionConfig()
+	config := zap.NewDevelopmentConfig()
 	config.OutputPaths = []string{"stdout", "csgostate-server.log"}
 	logger, err := config.Build(zap.AddCaller())
 	if err != nil {

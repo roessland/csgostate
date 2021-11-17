@@ -8,15 +8,17 @@ import (
 type Extractor struct {
 	players      map[string]playerState
 	numEventsFed int
+	repo         *EventRepo
 }
 
 type playerState struct {
 	prevState, currState *csgostate.State
 }
 
-func NewExtractor() *Extractor {
+func NewExtractor(repo *EventRepo) *Extractor {
 	e := &Extractor{}
 	e.players = make(map[string]playerState)
+	e.repo = repo
 	return e
 }
 
@@ -39,35 +41,35 @@ func (e *Extractor) Feed(state *csgostate.State) error {
 		currState: state,
 	}
 	e.players[providerSteamID] = newPlayerState
-	err := extractAll(newPlayerState.prevState, newPlayerState.currState)
+	err := e.extractAll(newPlayerState.prevState, newPlayerState.currState)
 	if err != nil {
 		return errors.Wrap(err, "error during events extraction")
 	}
 	return nil
 }
 
-func extractAll(prevState, currState *csgostate.State) error {
+func (e *Extractor) extractAll(prevState, currState *csgostate.State) error {
 	err := checkProvidersMatch(prevState, currState)
 	if err != nil {
 		return errors.Wrap(err, "provider mismatch")
 	}
 
-	err = extractAppeared(prevState, currState)
+	err = e.repo.Appeared.extractFromStateDiff(prevState, currState)
 	if err != nil {
 		return errors.Wrap(err, "error extracting appeared event")
 	}
 
-	err = extractSpawned(prevState, currState)
+	err = e.repo.Spawned.extractFromStateDiff(prevState, currState)
 	if err != nil {
 		return errors.Wrap(err, "error extracting spawned event")
 	}
 
-	err = extractSpectating(prevState, currState)
+	err = e.repo.Spectating.extractFromStateDiff(prevState, currState)
 	if err != nil {
 		return errors.Wrap(err, "error extracting spectating event")
 	}
 
-	err = extractDied(prevState, currState)
+	err = e.repo.Died.extractFromStateDiff(prevState, currState)
 	if err != nil {
 		return errors.Wrap(err, "error extracting died event")
 	}

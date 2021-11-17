@@ -4,8 +4,6 @@ import (
 	"github.com/roessland/csgostate/csgostate"
 )
 
-var Died died
-
 type DiedPayload struct {
 	PrevState *csgostate.State
 	CurrState *csgostate.State
@@ -30,7 +28,7 @@ func (e *died) Trigger(payload DiedPayload) {
 }
 
 
-func extractDied(prevState, currState *csgostate.State) error {
+func (e *died) extractFromStateDiff(prevState, currState *csgostate.State) error {
 	if prevState == nil {
 		// This cannot be the first event
 		return nil
@@ -65,7 +63,7 @@ func extractDied(prevState, currState *csgostate.State) error {
 			currState.Player.SteamID != currState.Provider.SteamID ||
 			currState.Player.State == nil ||
 			currState.Player.State.Health == 0) {
-		Died.Trigger(DiedPayload{
+		e.Trigger(DiedPayload{
 			PrevState: prevState,
 			CurrState: currState,
 		})

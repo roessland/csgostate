@@ -39,7 +39,7 @@ type Player struct {
 	ObserverSlot *int              `json:"observer_slot,omitempty"`
 	State        *PlayerState      `json:"state,omitempty"`
 	SteamID      string            `json:"steamid,omitempty"`
-	Team         string            `json:"team,omitempty"`
+	Team         PlayerTeam            `json:"team,omitempty"`
 	Weapons      *PlayerWeapons    `json:"weapons,omitempty"`
 }
 
@@ -49,6 +49,24 @@ type PlayerActivity string
 
 const PlayerActivityPlaying PlayerActivity = "playing"
 const PlayerActivityMenu PlayerActivity = "menu"
+
+type PlayerTeam string
+
+const PlayerTeamNil PlayerTeam = ""
+const PlayerTeamCT PlayerTeam = "CT"
+const PlayerTeamT PlayerTeam = "T"
+
+func PlayerTeamFromString(name string) PlayerTeam {
+	switch PlayerTeam(name) {
+	case PlayerTeamCT:
+		return PlayerTeamCT
+	case PlayerTeamT:
+		return PlayerTeamT
+	default:
+		return PlayerTeamNil
+	}
+}
+
 
 type Provider struct {
 	AppID     int    `json:"appid"`
@@ -112,6 +130,17 @@ type Round struct {
 	// Bomb is "" before bomb is planted, then becomes "planted" when planted, then "exploded"
 	Bomb string `json:"bomb,omitempty"`
 	// Phase is over -> freezetime -> live -> freezetime -> over
-	Phase   string `json:"phase"`
-	WinTeam string `json:"win_team,omitempty"` // Missing, T or CT
+	Phase   RoundPhase   `json:"phase"`
+	WinTeam RoundWinTeam `json:"win_team,omitempty"` // Missing, T or CT
 }
+
+type RoundPhase string
+
+const RoundPhaseOver RoundPhase = "over"
+const RoundPhaseFreezetime RoundPhase = "freezetime"
+const RoundPhaseLive RoundPhase = "live"
+
+type RoundWinTeam string
+
+const RoundWinTeamCT RoundWinTeam = "CT"
+const RoundWinTeamT RoundWinTeam = "T"

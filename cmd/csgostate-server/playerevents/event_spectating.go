@@ -4,8 +4,6 @@ import (
 	"github.com/roessland/csgostate/csgostate"
 )
 
-var Spectating spectating
-
 type SpectatingPayload struct {
 	PrevState *csgostate.State
 	CurrState *csgostate.State
@@ -30,7 +28,7 @@ func (e *spectating) Trigger(payload SpectatingPayload) {
 }
 
 
-func extractSpectating(prevState, currState *csgostate.State) error {
+func (e *spectating) extractFromStateDiff(prevState, currState *csgostate.State) error {
 	if prevState == nil {
 		// Should never happen
 		return nil
@@ -46,7 +44,7 @@ func extractSpectating(prevState, currState *csgostate.State) error {
 		return nil
 	}
 	if prevState.Player == nil || currState.Player.SteamID != prevState.Player.SteamID {
-		Spectating.Trigger(SpectatingPayload{
+		e.Trigger(SpectatingPayload{
 			PrevState: prevState,
 			CurrState: currState,
 		})

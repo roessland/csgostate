@@ -9,7 +9,6 @@ import (
 	"net/http"
 	"os"
 	"strings"
-	"time"
 )
 
 func main() {
@@ -57,7 +56,7 @@ func main() {
 		}
 
 		fmt.Println("sleeping for ", change.Provider.Timestamp - prevTimestamp, "seconds)")
-		time.Sleep(time.Duration(change.Provider.Timestamp - prevTimestamp)*time.Second/3)
+		// time.Sleep(time.Duration(change.Provider.Timestamp - prevTimestamp)*time.Second/3)
 
 		resp, err := http.Post("http://127.0.0.1:3528/api/push", "text/html", strings.NewReader(msg))
 		if err != nil {

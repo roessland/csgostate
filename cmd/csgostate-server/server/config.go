@@ -22,6 +22,8 @@ type Config struct {
 
 	// Admins is a list of the SteamIDs of admin users.
 	Admins []string
+
+	DiscordWebhookURL string
 }
 
 func NewConfig() Config {
@@ -31,6 +33,8 @@ func NewConfig() Config {
 	config.SteamKey = os.Getenv("STEAM_KEY")
 	config.PushTokenSecret = os.Getenv("PUSH_TOKEN_SECRET")
 	config.Admins = strings.Split(os.Getenv("ADMINS"), ",")
+	config.DiscordWebhookURL = os.Getenv("DISCORD_WEBHOOK")
+
 	config.Verify()
 	return config
 }
@@ -50,6 +54,10 @@ func (config Config) Verify() {
 
 	if len(config.PushTokenSecret) < 20 {
 		panic("missing or too short PUSH_TOKEN_SECRET environment variable")
+	}
+
+	if len(config.DiscordWebhookURL) < 20 {
+		panic("missing or too short DISCORD_WEBHOOK environment variable")
 	}
 }
 
