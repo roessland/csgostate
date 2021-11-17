@@ -56,7 +56,7 @@ func (config Config) Verify() {
 		panic("missing or too short PUSH_TOKEN_SECRET environment variable")
 	}
 
-	if len(config.DiscordWebhookURL) < 20 {
+	if len(config.DiscordWebhookURL) < 0 {
 		panic("missing or too short DISCORD_WEBHOOK environment variable")
 	}
 }

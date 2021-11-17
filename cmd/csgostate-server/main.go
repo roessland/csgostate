@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"github.com/roessland/csgostate/cmd/csgostate-server/api"
 	"github.com/roessland/csgostate/cmd/csgostate-server/maps"
 	"github.com/roessland/csgostate/cmd/csgostate-server/playerevents"
@@ -79,9 +80,11 @@ func registerEventHandlers(app *server.App) {
 			"to_phase", payload.To)
 
 		if payload.To == csgostate.RoundPhaseFreezetime {
+			fmt.Println("yayyyyy, the map is", payload.CurrState.Map.Name, payload.CurrState.Player.Team)
 			m := maps.FromString(payload.CurrState.Map.Name)
 			strat := stratroulette.GetRandom(m, payload.CurrState.Player.Team, false)
 			if strat != nil {
+				app.Log.Infow("postan to discord", "msg", strat.DescNO)
 				app.Discord.Post("YOOO BOIIS HERE IS THE PLAN: " + strat.DescNO)
 			}
 		}

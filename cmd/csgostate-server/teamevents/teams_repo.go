@@ -107,16 +107,19 @@ func (ti *teamInfo) addPlayer(id, nick string) {
 }
 
 func (ti *teamInfo) updateLastRoundPhase(state *csgostate.State, teamEvents *EventRepo) {
-	roundPhase := state.Round.Phase
-	lastPhase := ti.lastRoundPhase
-	if lastPhase != roundPhase {
+	if state.Round == nil {
+		return
+	}
+	currRoundPhase := state.Round.Phase
+	lastRoundPhase := ti.lastRoundPhase
+	if lastRoundPhase != currRoundPhase {
 		teamEvents.RoundPhaseChanged.Trigger(RoundPhaseChangedPayload{
-			From:      lastPhase,
-			To:        roundPhase,
+			From:      lastRoundPhase,
+			To:        currRoundPhase,
 			CurrState: state,
 		})
 	}
-	ti.lastRoundPhase = roundPhase
+	ti.lastRoundPhase = currRoundPhase
 }
 
 func (ti *teamInfo) String() string {

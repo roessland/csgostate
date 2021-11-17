@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"time"
 )
 
 type Client struct {
@@ -24,6 +25,10 @@ type webhookSimpleMsg struct {
 }
 
 func (c *Client) Post(msg string) {
+	if c.WebhookURL == "" {
+		fmt.Println("DISCORD POST:", msg)
+		return
+	}
 	body, _ := json.Marshal(webhookSimpleMsg{
 		Username: "CS:GO State",
 		Content:  msg,
@@ -33,10 +38,12 @@ func (c *Client) Post(msg string) {
 		panic(err)
 	}
 	req.Header.Set("Content-Type", "application/json")
-	resp, err := http.DefaultClient.Do(req)
+	httpClient := &http.Client{Timeout: 10*time.Second}
+	resp, err := httpClient.Do(req)
 	if err != nil {
 		panic(err)
 	}
+	defer resp.Body.Close()
 	respBody, _ := io.ReadAll(resp.Body)
 	fmt.Println(string(respBody))
 }
