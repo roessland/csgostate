@@ -9,6 +9,8 @@ const Inferno Map = "de_inferno"
 const Vertigo Map = "de_vertigo"
 const Cache Map = "de_cache"
 const Nuke Map = "de_nuke"
+const Ancient Map = "de_ancient"
+const Insertion2 Map = "cs_insertion2"
 
 func FromString(name string) Map {
 	switch Map(name) {

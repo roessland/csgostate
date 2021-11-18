@@ -16,6 +16,7 @@ func init() {
 			maps.Inferno: true,
 			maps.Dust2:   true,
 			maps.Vertigo: true,
+			maps.Ancient: true,
 		},
 		Tags: map[Tag]bool{
 			TagSerious: true,
@@ -74,6 +75,19 @@ func init() {
 		},
 		Tags: map[Tag]bool{
 			TagSerious: true,
+		},
+	})
+
+	addStrat(Strat{
+		Team:   csgostate.PlayerTeamCT,
+		Name:   "Camp taket i et minutt",
+		DescNO: "All spawner ved apartments, går opp stigen til taket. Camper der til det er 40 sekund igjen, deretter rusher nærmeste hostage.",
+		DescEN: "",
+		ApplicableMaps: map[maps.Map]bool{
+			maps.Insertion2: true,
+		},
+		Tags: map[Tag]bool{
+			TagSerious: false,
 		},
 	})
 }
