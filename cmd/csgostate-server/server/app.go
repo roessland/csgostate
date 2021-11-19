@@ -8,7 +8,6 @@ import (
 	"github.com/roessland/csgostate/cmd/csgostate-server/repos/staterepo"
 	"github.com/roessland/csgostate/cmd/csgostate-server/repos/userrepo"
 	"github.com/roessland/csgostate/cmd/csgostate-server/sessions"
-	"github.com/roessland/csgostate/cmd/csgostate-server/teamevents"
 	"github.com/roessland/csgostate/csgostate"
 	bolt "go.etcd.io/bbolt"
 	"net/http"
@@ -27,9 +26,6 @@ type App struct {
 	StateListener         *csgostate.Listener
 	PlayerEvents          *playerevents.EventRepo
 	PlayerEventsExtractor *playerevents.Extractor
-	TeamEvents            *teamevents.EventRepo
-	TeamAssembler         *teamevents.TeamAssembler
-	TeamsRepo             *teamevents.TeamsRepo
 }
 
 func NewApp(config Config) (*App, error) {
@@ -51,7 +47,7 @@ func NewApp(config Config) (*App, error) {
 		return nil, err
 	}
 
-	app.Discord = discord.NewClient(app.Config.DiscordWebhookURL)
+	app.Discord = discord.NewClient(app.Config.DiscordWebhookURL, app.Log)
 
 	app.PlayerRepo = playerrepo.NewInMemoryPlayerRepo()
 
@@ -68,9 +64,6 @@ func NewApp(config Config) (*App, error) {
 	app.StateListener = csgostate.NewListener()
 	app.PlayerEvents = playerevents.NewRepo()
 	app.PlayerEventsExtractor = playerevents.NewExtractor(app.PlayerEvents)
-	app.TeamEvents = teamevents.NewRepo()
-	app.TeamAssembler = teamevents.NewTeamAssembler(app.PlayerEvents, app.TeamEvents)
-	app.TeamsRepo = teamevents.NewTeamsRepo(app.TeamAssembler, app.TeamEvents, app.PlayerEvents)
 
 	return app, nil
 }

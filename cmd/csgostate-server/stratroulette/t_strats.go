@@ -17,6 +17,7 @@ func init() {
 			maps.Dust2:   true,
 			maps.Vertigo: true,
 			maps.Ancient: true,
+			maps.Basalt:  true,
 		},
 		Tags: map[Tag]bool{
 			TagSerious: true,
@@ -38,6 +39,18 @@ func init() {
 		},
 	})
 
+	addStrat(Strat{
+		Team:   csgostate.PlayerTeamT,
+		Name:   "Rush A",
+		DescNO: "Rush A!",
+		DescEN: "",
+		ApplicableMaps: map[maps.Map]bool{
+			maps.Basalt: true,
+		},
+		Tags: map[Tag]bool{
+			TagSerious: true,
+		},
+	})
 
 	addStrat(Strat{
 		Team:   csgostate.PlayerTeamT,
@@ -79,15 +92,23 @@ func init() {
 	})
 
 	addStrat(Strat{
-		Team:   csgostate.PlayerTeamCT,
-		Name:   "Camp taket i et minutt",
-		DescNO: "All spawner ved apartments, går opp stigen til taket. Camper der til det er 40 sekund igjen, deretter rusher nærmeste hostage.",
+		Team:   csgostate.PlayerTeamT,
+		Name:   "Default",
+		DescNO: "Default strat for T, få mid-kontroll, få noen picks.",
 		DescEN: "",
 		ApplicableMaps: map[maps.Map]bool{
+			maps.Basalt:     true,
+			maps.Dust2:      true,
+			maps.Inferno:    true,
+			maps.Vertigo:    true,
+			maps.Cache:      true,
+			maps.Nuke:       true,
+			maps.Ancient:    true,
 			maps.Insertion2: true,
+			maps.Mirage:     true,
 		},
 		Tags: map[Tag]bool{
-			TagSerious: false,
+			TagSerious: true,
 		},
 	})
 }

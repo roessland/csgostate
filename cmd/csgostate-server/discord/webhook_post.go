@@ -3,19 +3,21 @@ package discord
 import (
 	"bytes"
 	"encoding/json"
-	"fmt"
+	"github.com/roessland/csgostate/cmd/csgostate-server/logger"
 	"io"
 	"net/http"
 	"time"
 )
 
 type Client struct {
+	Log        logger.Logger
 	WebhookURL string
 }
 
-func NewClient(webhookURL string) *Client {
+func NewClient(webhookURL string, log logger.Logger) *Client {
 	c := &Client{}
 	c.WebhookURL = webhookURL
+	c.Log = log
 	return c
 }
 
@@ -24,9 +26,10 @@ type webhookSimpleMsg struct {
 	Content  string `json:"content"`
 }
 
+// TODO return error
 func (c *Client) Post(msg string) {
 	if c.WebhookURL == "" {
-		fmt.Println("DISCORD POST:", msg)
+		c.Log.Infow("missing discord webhook url; logging instead", "msg", msg)
 		return
 	}
 	body, _ := json.Marshal(webhookSimpleMsg{
@@ -38,12 +41,15 @@ func (c *Client) Post(msg string) {
 		panic(err)
 	}
 	req.Header.Set("Content-Type", "application/json")
-	httpClient := &http.Client{Timeout: 10*time.Second}
+	httpClient := &http.Client{Timeout: 10 * time.Second}
 	resp, err := httpClient.Do(req)
 	if err != nil {
 		panic(err)
 	}
 	defer resp.Body.Close()
 	respBody, _ := io.ReadAll(resp.Body)
-	fmt.Println(string(respBody))
+	c.Log.Infow("posted to discord webhook",
+		"msg", msg,
+		"response_code", resp.StatusCode,
+		"response_body", string(respBody))
 }

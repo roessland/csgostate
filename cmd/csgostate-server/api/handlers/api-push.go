@@ -44,14 +44,8 @@ func PostApiPush(app *server.App) func(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		// Feed to TeamsRepo
-		app.TeamsRepo.Feed(&state)
-
 		// Update PlayerRepo
 		app.PlayerRepo.Update(&state)
-
-
-
 
 		// Success
 		w.Header().Set("Content-Type", "text/html")

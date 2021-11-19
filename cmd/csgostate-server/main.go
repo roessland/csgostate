@@ -3,14 +3,12 @@ package main
 import (
 	"fmt"
 	"github.com/roessland/csgostate/cmd/csgostate-server/api"
-	"github.com/roessland/csgostate/cmd/csgostate-server/maps"
 	"github.com/roessland/csgostate/cmd/csgostate-server/playerevents"
 	"github.com/roessland/csgostate/cmd/csgostate-server/server"
-	"github.com/roessland/csgostate/cmd/csgostate-server/stratroulette"
-	"github.com/roessland/csgostate/cmd/csgostate-server/teamevents"
-	_ "github.com/roessland/csgostate/cmd/csgostate-server/teamevents"
 	"github.com/roessland/csgostate/csgostate"
 	"log"
+	"os"
+	"strings"
 	"time"
 )
 
@@ -20,9 +18,11 @@ func main() {
 		log.Fatal(err)
 	}
 
+	// stateGrep(app, `"name": "weapon_flashbang",`)
+
 	registerEventHandlers(app)
 
-	//debugEventHandlers(app)
+	debugEventHandlers(app)
 
 	api.ServeAPI(app)
 }
@@ -44,6 +44,10 @@ func registerEventHandlers(app *server.App) {
 		if isReloading(payload.PrevState) {
 			app.Discord.Post("lol! Ikke reload når du peeker, lmao for en noob du er " + payload.PrevState.Player.Name)
 		}
+
+		if isHoldingGrenade(payload.PrevState) {
+			app.Discord.Post(payload.PrevState.Player.Name + " ble drept med en granat i hånden. Aiaiai, for en noob.")
+		}
 	})
 
 	app.PlayerEvents.Spawned.Register(func(payload playerevents.SpawnedPayload) {
@@ -58,40 +62,6 @@ func registerEventHandlers(app *server.App) {
 			"event", app.PlayerEvents.Appeared.String(),
 			"nick", payload.CurrState.Player.Name,
 			"time", payload.CurrState.Provider.Timestamp)
-	})
-
-	app.TeamEvents.Created.Register(func(payload teamevents.CreatedPayload) {
-		app.Log.Infow("",
-			"event", app.TeamEvents.Created.String(),
-			"team_id", payload.TeamID)
-	})
-
-	app.TeamEvents.PlayerJoined.Register(func(payload teamevents.PlayerJoinedPayload) {
-		app.Log.Infow("",
-			"event", app.TeamEvents.PlayerJoined.String(),
-			"team_id", payload.TeamID,
-			"player_id", payload.PlayerID)
-	})
-
-	app.TeamEvents.RoundPhaseChanged.Register(func(payload teamevents.RoundPhaseChangedPayload) {
-		app.Log.Infow("",
-			"event", app.TeamEvents.RoundPhaseChanged.String(),
-			"from_phase", payload.From,
-			"to_phase", payload.To)
-
-		if payload.To == csgostate.RoundPhaseFreezetime {
-			fmt.Println("yayyyyy, the map is", payload.CurrState.Map.Name, payload.CurrState.Player.Team)
-			m := maps.FromString(payload.CurrState.Map.Name)
-			strat := stratroulette.GetRandom(m, payload.CurrState.Player.Team, false)
-			if strat != nil {
-				app.Log.Infow("postan to discord", "msg", strat.DescNO)
-				app.Discord.Post("YOOO BOIIS HERE IS THE PLAN: " + strat.DescNO)
-			}
-		}
-
-		if payload.To == csgostate.RoundPhaseLive {
-			//fmt.Println("Lets gooooo!")
-		}
 	})
 }
 
@@ -119,14 +89,40 @@ func debugEventHandlers(app *server.App) {
 			panic(err)
 		}
 
-		app.TeamsRepo.Feed(&states[i])
 		app.Log.Sync()
 	}
+}
+
+
+// stateGrep searches DB for a string.
+func stateGrep(app *server.App, str string) {
+	states, err := app.StateRepo.GetAll()
+	if err != nil {
+		panic(err)
+	}
+	for i := 1; i < len(states); i++ {
+		if strings.Contains(string(states[i].RawJson), str) {
+			fmt.Println(string(states[i].RawJson))
+		}
+	}
+	os.Exit(0)
 }
 
 func isReloading(state *csgostate.State) bool {
 	for _, weap := range *state.Player.Weapons {
 		if weap.State == csgostate.WeaponStateReloading {
+			return true
+		}
+	}
+	return false
+}
+
+func isHoldingGrenade(state *csgostate.State) bool {
+	for _, weap := range *state.Player.Weapons {
+		if weap.State != csgostate.WeaponStateActive {
+			continue
+		}
+		if strings.HasSuffix(weap.Name, "flashbang") || strings.HasSuffix(weap.Name, "grenade") {
 			return true
 		}
 	}
