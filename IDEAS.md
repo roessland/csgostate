@@ -45,3 +45,8 @@
 
 * "Diss bot" -- calling out players reloading or throwing nades while getting
   killed.
+
+* When rolling session secret, log users out instead of cryptic error message
+  "unable to get session"
+  
+* Make sure DB is u+rw,g-rwx,o-rwx
