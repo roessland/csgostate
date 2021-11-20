@@ -32,7 +32,7 @@ jobs:
           mkdir -p /home/runner/.ssh
           ssh-keyscan roessland.com >> /home/runner/.ssh/known_hosts
           echo "${{ secrets.SSH_PRIVATE_KEY }}" > /home/runner/.ssh/id_ed25519
-          chmod 600 /home/runner/.ssh/id_25519
+          chmod 600 /home/runner/.ssh/id_ed25519
           ls
           pwd
           ssh csgostate@roessland.com ls -lah
