@@ -2,10 +2,10 @@ package main
 
 import (
 	"fmt"
-	"github.com/roessland/csgostate/cmd/csgostate-server/api"
-	"github.com/roessland/csgostate/cmd/csgostate-server/playerevents"
-	"github.com/roessland/csgostate/cmd/csgostate-server/server"
-	"github.com/roessland/csgostate/csgostate"
+	"github.com/roessland/csgostate/internal/api"
+	"github.com/roessland/csgostate/internal/playerevents"
+	"github.com/roessland/csgostate/internal/server"
+	"github.com/roessland/csgostate/pkg/csgostate"
 	"log"
 	"os"
 	"strings"

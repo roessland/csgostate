@@ -2,7 +2,13 @@
 *.swp
 *.swo
 /botmatch.json
-/csgostate.exe
-/cmd/csgostate-server/csgostate-server.exe
 *.db
 *.log
+.DS_Store
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+*.test
+*.out

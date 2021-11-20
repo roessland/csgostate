@@ -2,7 +2,7 @@ package main
 
 import (
 	"github.com/gorilla/mux"
-	"github.com/roessland/csgostate/csgostate"
+	"github.com/roessland/csgostate/pkg/csgostate"
 	"log"
 	"net/http"
 	"os"

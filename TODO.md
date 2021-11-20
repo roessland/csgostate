@@ -9,24 +9,25 @@ Must put a cfg file in:
 `CfgDir string` option.
 
 Windows: You can find this by reading the registry value.
-`HKEY_CURRENT_USER\Software\Valve\Steam`,
-then add the rest of the install path.
+`HKEY_CURRENT_USER\Software\Valve\Steam`, then add the rest of the install
+path.
 
 `SteamPath Key Value + "\SteamApps\common\Counter-Strike Global Offensive\csgo\cfg\"
 `
 
-The file should be named `gamestate_integration_YourServiceName.cfg` and
-the filename should be unique since it could be
-overwritten by other gamestate clients.
+The file should be named `gamestate_integration_YourServiceName.cfg` and the
+filename should be unique since it could be overwritten by other gamestate
+clients.
 
-For MVP I can just create the file manually.
-Later on I should provide a feature to create the file
-if it does not exist, and maybe a config file specifying the cfg directory.
+For MVP I can just create the file manually. Later on I should provide a
+feature to create the file if it does not exist, and maybe a config file
+specifying the cfg directory.
 
 The contents of this file depends on whether you are spectating or playing.
-Since this library focuses on playing, only the player config is added.
-Adding extra spectator fields you don't have access to will result in an
-empty or missing field (which isn't really a problem).
+Since this library focuses on playing, only the player config is added. Adding
+extra spectator fields you don't have access to will result in an empty or
+missing field (which isn't really a problem).
+
 ```
 "Config name goes here, can be anything"
 {
@@ -62,47 +63,47 @@ empty or missing field (which isn't really a problem).
 }
 ```
 
-The auth section is added to every request,
-and can be used to avoid people sending messages on
-behalf of other players. Since this MVP assumes players
-are trusted I'll just add a random constant value here.
+The auth section is added to every request, and can be used to avoid people
+sending messages on behalf of other players. Since this MVP assumes players are
+trusted I'll just add a random constant value here.
 
 ## Endpoint settings
 
-These are important. In particular, since I want a live-updated
-dashboard:
-* uri: Use a HTTPS address with SSL. Steam will validate the cert.
-  But since we have a middleman client to filter out useless info,
-  localhost:3528 should be fine.
-* timeout: Client will consider a message timed out if there is no 
-  response after this amount of time. The implications of this
-  is that the API should buffer incoming messages and immediately
-  return 200 OK to Steam, then process messages async.
-* buffer: How live are we? Default of 0.1 sec should be fine.
-  This clusters messages occurring in a short time interval to save bandwidth
-  and connections.
-* throttle: Don't send another message this amount of time
-  after getting 200 OK from API. Default of 1.0 sec is probably too high,
-  consider decreasing to 0.2-0.4 sec.
-* heartbeat: Even if no game state change occurs, send a heartbeat.
-  This is probably useful. Around 3-5 seconds should be fine.
-  
+These are important. In particular, since I want a live-updated dashboard:
+
+* uri: Use a HTTPS address with SSL. Steam will validate the cert. But since we
+  have a middleman client to filter out useless info, localhost:3528 should be
+  fine.
+* timeout: Client will consider a message timed out if there is no response
+  after this amount of time. The implications of this is that the API should
+  buffer incoming messages and immediately return 200 OK to Steam, then process
+  messages async.
+* buffer: How live are we? Default of 0.1 sec should be fine. This clusters
+  messages occurring in a short time interval to save bandwidth and
+  connections.
+* throttle: Don't send another message this amount of time after getting 200 OK
+  from API. Default of 1.0 sec is probably too high, consider decreasing to
+  0.2-0.4 sec.
+* heartbeat: Even if no game state change occurs, send a heartbeat. This is
+  probably useful. Around 3-5 seconds should be fine.
+
 ## Filtering data
 
-We can do some filtering in the config file,
-by eliminating useless components,  
+We can do some filtering in the config file, by eliminating useless
+components,  
 so that messages of that type are never sent to begin with.
 
 ## Event triggers
-Terrorist player drops C4 -> Can start bomb-timer.
-Restart it whenever someone drops C4, since they may have picked it up again.
-Remove counter whenever someone picks up C4.
-There is a bomb planted event but it could be delayed???
+
+Terrorist player drops C4 -> Can start bomb-timer. Restart it whenever someone
+drops C4, since they may have picked it up again. Remove counter whenever
+someone picks up C4. There is a bomb planted event but it could be delayed???
 Hypothesis: Drop C4 event is accurate while bomb planted event is inaccurate.
 
 ## Messages
 
 When launching game
+
 ```
 {
         "provider": {
@@ -125,6 +126,7 @@ When launching game
 ```
 
 When connecting to a game
+
 ```
 {
         "provider": {
@@ -906,8 +908,8 @@ When connecting to a game
 
 ```
 
-
 When idling for 5 seconds in deathmatch
+
 ```
 {
         "provider": {
@@ -1078,11 +1080,9 @@ When idling for 5 seconds in deathmatch
 }
 ```
 
-
 When shooting with Glock and emptying a magazine,
 
-We get a LOT of superfluous information here,
-that should be filtered out.
+We get a LOT of superfluous information here, that should be filtered out.
 
 ```
 {
@@ -2664,8 +2664,9 @@ that should be filtered out.
 
 ```
 
+When switching from AK to SMG, then repeatedly switching weapons for a few
+seconds:
 
-When switching from AK to SMG, then repeatedly switching weapons for a few seconds:
 ```
 {
         "provider": {
@@ -4734,7 +4735,6 @@ Joining new deathmatch server. Choosing team. Warmup ends. Round starts.
 }
 ```
 
-
 ## Steam OAuth2 login
 
 We can authenticate users in the following way:
@@ -4743,11 +4743,11 @@ We can authenticate users in the following way:
 2. Generate the cfg file with a random secret token in the auth section.
 3. User manually install cfg file.
 4. User launches CS:GO. CS:GO sends HTTP request to API.
-5. Reverse lookup secret token -> steam ID. It's not valid if steamID in message
-is different from the stored steam ID.
+5. Reverse lookup secret token -> steam ID. It's not valid if steamID in
+   message is different from the stored steam ID.
 
-This way all requests are connected to a SteamID. 
-We can simply drop all unauthenticated requests.
+This way all requests are connected to a SteamID. We can simply drop all
+unauthenticated requests.
 
 Steam OpenID provider:
 
@@ -4762,7 +4762,8 @@ Steam OpenID provider:
     </XRD>
     </xrds:XRDS>
 
-Curling the URI gives this. We are redirected to Steamcommunity.com with a new cookie.
+Curling the URI gives this. We are redirected to Steamcommunity.com with a new
+cookie.
 
     > GET /openid/login HTTP/1.1
     > Host: steamcommunity.com
@@ -4785,8 +4786,7 @@ Curling the URI gives this. We are redirected to Steamcommunity.com with a new c
     < Set-Cookie: sessionid=d4350b4b59afe4b20820ef49; Path=/; Secure; SameSite=None
     < Set-Cookie: steamCountry=DE%7C60698fcbe40561212d3a1b665a038208; Path=/; Secure; SameSite=None
 
-
 ## Game ID
 
-Or how to know whether two players are in the same team.
-RoundNo + map + team + game mode + phase + consecutive round losses
+Or how to know whether two players are in the same team. RoundNo + map + team +
+game mode + phase + consecutive round losses

@@ -3,7 +3,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/roessland/csgostate/csgostate"
+	"github.com/roessland/csgostate/pkg/csgostate"
 	"io/ioutil"
 	"log"
 	"net/http"
