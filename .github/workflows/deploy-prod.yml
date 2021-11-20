@@ -1,4 +1,4 @@
-name: Test
+name: Deploy to production
 
 on:
   workflow_dispatch:
@@ -24,6 +24,7 @@ jobs:
 
   deploy:
     runs-on: ubuntu-latest
+    environment: production
     needs: test
     steps:
       - name: Deploy app
