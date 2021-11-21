@@ -36,7 +36,7 @@ jobs:
           chmod 600 /home/runner/.ssh/id_ed25519
           ls
           pwd
-          scp csgostate-server gostate@roessland.com:~
+          scp csgostate-server csgostate@roessland.com:~
           sudo systemctl restart csgostate
 
           status_code=$(curl --write-out %{http_code} --silent --output /dev/null https://csgostate.roessland.com/api/health)
