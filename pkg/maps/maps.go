@@ -20,12 +20,20 @@ func FromString(name string) Map {
 		return Dust2
 	case Inferno:
 		return Inferno
+	case Mirage:
+		return Mirage
 	case Vertigo:
 		return Vertigo
 	case Cache:
 		return Cache
 	case Nuke:
 		return Nuke
+	case Ancient:
+		return Ancient
+	case Insertion2:
+		return Insertion2
+	case Basalt:
+		return Basalt
 	default:
 		return Unknown
 	}
