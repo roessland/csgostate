@@ -12,7 +12,6 @@ import (
 
 var httpRequestHistogram = promauto.NewHistogramVec(
 	prometheus.HistogramOpts{
-		Namespace: "csgostate",
 		Name:      "http_request_duration_seconds",
 		Help:      "Duration of HTTP requests",
 	}, []string{
