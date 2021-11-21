@@ -66,6 +66,6 @@ func ServeAPI(app *server.App) {
 		ReadTimeout:  15 * time.Second,
 	}
 
-	app.Log.Infof("listening to %s", srv.Addr)
-	app.Log.Infow("server closed", "err", srv.ListenAndServe())
+	app.Log.Infof("api server listening to %s", srv.Addr)
+	app.Log.Infow("api server closed", "err", srv.ListenAndServe())
 }

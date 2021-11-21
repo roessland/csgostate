@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"github.com/roessland/csgostate/internal/api"
+	"github.com/roessland/csgostate/internal/metrics"
 	"github.com/roessland/csgostate/internal/playerevents"
 	"github.com/roessland/csgostate/internal/server"
 	"github.com/roessland/csgostate/pkg/csgostate"
@@ -23,6 +24,8 @@ func main() {
 	registerEventHandlers(app)
 
 	// debugEventHandlers(app)
+
+	go metrics.Serve(app.Log)
 
 	api.ServeAPI(app)
 }
@@ -92,7 +95,6 @@ func debugEventHandlers(app *server.App) {
 		app.Log.Sync()
 	}
 }
-
 
 // stateGrep searches DB for a string.
 func stateGrep(app *server.App, str string) {

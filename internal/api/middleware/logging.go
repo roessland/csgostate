@@ -2,14 +2,29 @@ package middleware
 
 import (
 	"github.com/gorilla/mux"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promauto"
 	"github.com/roessland/csgostate/internal/server"
 	"net/http"
+	"strconv"
 	"time"
+)
+
+var httpRequestHistogram = promauto.NewHistogramVec(
+	prometheus.HistogramOpts{
+		Namespace: "csgostate",
+		Name:      "http_request_duration_seconds",
+		Help:      "Duration of HTTP requests",
+	}, []string{
+		"app", "env", "handler", "method", "code",
+	},
 )
 
 func NewRequestResponseLoggingMiddleware(app *server.App) mux.MiddlewareFunc {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			t0 := time.Now()
+
 			// Extract mux path matched
 			route := mux.CurrentRoute(r)
 			var pathTemplate string
@@ -17,7 +32,6 @@ func NewRequestResponseLoggingMiddleware(app *server.App) mux.MiddlewareFunc {
 				pathTemplate, _ = route.GetPathTemplate()
 			}
 
-			// Extract SteamID from Session
 			sess, _ := app.SessionStore.New(r)
 			steamID := sess.SteamID()
 			nickName := sess.NickName()
@@ -31,13 +45,19 @@ func NewRequestResponseLoggingMiddleware(app *server.App) mux.MiddlewareFunc {
 				"request_id", RequestID(r),
 			)
 
-			t0 := time.Now()
-
 			srw := &statusResponseWriter{ResponseWriter: w}
-
 			next.ServeHTTP(srw, r)
 
-			millis := time.Since(t0).Milliseconds()
+			duration := time.Since(t0)
+
+			httpRequestHistogram.
+				WithLabelValues(
+					app.Config.AppName,
+					app.Config.Env,
+					pathTemplate,
+					r.Method,
+					strconv.Itoa(srw.statusCode)).
+				Observe(duration.Seconds())
 
 			app.Log.Infow("http.response",
 				"method", r.Method,
@@ -45,7 +65,7 @@ func NewRequestResponseLoggingMiddleware(app *server.App) mux.MiddlewareFunc {
 				"uri", r.RequestURI,
 				"statusCode", srw.statusCode,
 				"request_id", RequestID(r),
-				"duration_ms", millis,
+				"duration_ms", duration.Milliseconds(),
 			)
 		})
 	}
@@ -56,7 +76,7 @@ type statusResponseWriter struct {
 	statusCode int
 }
 
-func (srw *statusResponseWriter) WriteHeader(statusCode int) () {
+func (srw *statusResponseWriter) WriteHeader(statusCode int) {
 	srw.statusCode = statusCode
 	srw.ResponseWriter.WriteHeader(statusCode)
 }

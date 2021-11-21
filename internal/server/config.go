@@ -6,6 +6,12 @@ import (
 )
 
 type Config struct {
+	// AppName is always "csgostate".
+	AppName string
+
+	// Env is always "prod".
+	Env string
+
 	// SessionSecret is used to encrypt session cookies.
 	SessionSecret string
 
@@ -23,11 +29,14 @@ type Config struct {
 	// Admins is a list of the SteamIDs of admin users.
 	Admins []string
 
+	// DiscordWebhookURL should be moved to user state instead of global state.
 	DiscordWebhookURL string
 }
 
 func NewConfig() Config {
 	config := Config{}
+	config.AppName = "csgostate"
+	config.Env = "prod"
 	config.URL = os.Getenv("CSGOSS_URL")
 	config.SessionSecret = os.Getenv("SESSION_SECRET")
 	config.SteamKey = os.Getenv("STEAM_KEY")
