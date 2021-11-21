@@ -1,6 +1,6 @@
 # CS:GO State
 
-[![Tests](https://github.com/roessland/csgostate/actions/workflows/tests.yml/badge.svg)](https://github.com/roessland/csgostate/actions/workflows/tests.yml) [![Production deploy](https://github.com/roessland/csgostate/actions/workflows/production-deploy.yml/badge.svg)](https://github.com/roessland/csgostate/actions/workflows/production-deploy.yml)
+[![Tests](https://github.com/roessland/csgostate/actions/workflows/tests.yml/badge.svg?branch=dev)](https://github.com/roessland/csgostate/actions/workflows/tests.yml) [![Production deploy](https://github.com/roessland/csgostate/actions/workflows/production-deploy.yml/badge.svg?branch=master)](https://github.com/roessland/csgostate/actions/workflows/production-deploy.yml)
 
 Live demo:
 https://csgostate.roessland.com/
