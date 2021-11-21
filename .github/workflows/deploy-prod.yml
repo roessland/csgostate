@@ -36,4 +36,14 @@ jobs:
           chmod 600 /home/runner/.ssh/id_ed25519
           ls
           pwd
-          ssh csgostate@roessland.com ls -lah
+          scp csgostate-server gostate@roessland.com:~
+          sudo systemctl restart csgostate
+
+          status_code=$(curl --write-out %{http_code} --silent --output /dev/null https://csgostate.roessland.com/api/health)
+
+          if [[ "$status_code" -ne 200 ]] ; then
+            echo "Site status changed to $status_code"
+            exit 1
+          else
+            exit 0
+          fi
