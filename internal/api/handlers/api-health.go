@@ -15,5 +15,6 @@ func GetApiHealth(app *server.App) func(w http.ResponseWriter, r *http.Request) 
 			app.Log.Errorw("error encoding body", "err", err)
 			http.Error(w, "error encoding body", http.StatusInternalServerError)
 		}
+		w.WriteHeader(300)
 	}
 }

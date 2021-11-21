@@ -31,8 +31,6 @@ jobs:
         ssh-keyscan roessland.com >> /home/runner/.ssh/known_hosts
         echo "${{ secrets.SSH_PRIVATE_KEY }}" > /home/runner/.ssh/id_ed25519
         chmod 600 /home/runner/.ssh/id_ed25519
-        ls
-        pwd
         scp csgostate-server csgostate@roessland.com:~
         ssh csgostate@roessland.com sudo /bin/systemctl restart csgostate
 
