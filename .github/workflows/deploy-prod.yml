@@ -34,7 +34,7 @@ jobs:
         ls
         pwd
         scp csgostate-server csgostate@roessland.com:~
-        sudo systemctl restart csgostate
+        ssh csgostate@roessland.com sudo /bin/systemctl restart csgostate
 
         status_code=$(curl --write-out %{http_code} --silent --output /dev/null https://csgostate.roessland.com/api/health)
 
