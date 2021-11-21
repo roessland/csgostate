@@ -7,43 +7,40 @@ on:
 
 jobs:
 
-  test:
+  test-and-deploy:
     runs-on: ubuntu-latest
+    environment: production
     steps:
-    - uses: actions/checkout@v2
+    - name: Checkout code
+      uses: actions/checkout@v2
 
     - name: Set up Go
       uses: actions/setup-go@v2
       with:
         go-version: 1.17
 
-    - name: Build
-      run: go build -v -o . ./...
-
     - name: Test
       run: go test -v ./...
 
-  deploy:
-    runs-on: ubuntu-latest
-    environment: production
-    needs: test
-    steps:
-      - name: Deploy app
-        run: |
-          mkdir -p /home/runner/.ssh
-          ssh-keyscan roessland.com >> /home/runner/.ssh/known_hosts
-          echo "${{ secrets.SSH_PRIVATE_KEY }}" > /home/runner/.ssh/id_ed25519
-          chmod 600 /home/runner/.ssh/id_ed25519
-          ls
-          pwd
-          scp csgostate-server csgostate@roessland.com:~
-          sudo systemctl restart csgostate
+    - name: Build
+      run: go build -v -o . ./...
 
-          status_code=$(curl --write-out %{http_code} --silent --output /dev/null https://csgostate.roessland.com/api/health)
+    - name: Deploy app
+      run: |
+        mkdir -p /home/runner/.ssh
+        ssh-keyscan roessland.com >> /home/runner/.ssh/known_hosts
+        echo "${{ secrets.SSH_PRIVATE_KEY }}" > /home/runner/.ssh/id_ed25519
+        chmod 600 /home/runner/.ssh/id_ed25519
+        ls
+        pwd
+        scp csgostate-server csgostate@roessland.com:~
+        sudo systemctl restart csgostate
 
-          if [[ "$status_code" -ne 200 ]] ; then
-            echo "Site status changed to $status_code"
-            exit 1
-          else
-            exit 0
-          fi
+        status_code=$(curl --write-out %{http_code} --silent --output /dev/null https://csgostate.roessland.com/api/health)
+
+        if [[ "$status_code" -ne 200 ]] ; then
+          echo "Site status changed to $status_code"
+          exit 1
+        else
+          exit 0
+        fi
