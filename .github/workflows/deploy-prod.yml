@@ -37,7 +37,7 @@ jobs:
         status_code=$(curl --write-out %{http_code} --silent --output /dev/null https://csgostate.roessland.com/api/health)
 
         if [[ "$status_code" -ne 200 ]] ; then
-          echo "Site status changed to $status_code"
+          echo "FAIL: Health check status changed to $status_code !!!"
           exit 1
         else
           exit 0
