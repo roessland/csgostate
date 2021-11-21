@@ -31,7 +31,7 @@ jobs:
         ssh-keyscan roessland.com >> /home/runner/.ssh/known_hosts
         echo "${{ secrets.SSH_PRIVATE_KEY }}" > /home/runner/.ssh/id_ed25519
         chmod 600 /home/runner/.ssh/id_ed25519
-        scp csgostate-server csgostate@roessland.com:~
+        scp csgostate-server csgostate@roessland.com:~/bin
         ssh csgostate@roessland.com sudo /bin/systemctl restart csgostate
 
         status_code=$(curl --write-out %{http_code} --silent --output /dev/null https://csgostate.roessland.com/api/health)

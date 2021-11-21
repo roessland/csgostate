@@ -22,7 +22,7 @@ func main() {
 
 	registerEventHandlers(app)
 
-	debugEventHandlers(app)
+	// debugEventHandlers(app)
 
 	api.ServeAPI(app)
 }
