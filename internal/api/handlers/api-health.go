@@ -9,12 +9,13 @@ import (
 func GetApiHealth(app *server.App) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// an example API handler
+		w.WriteHeader(300)
+
 		w.Header().Set("Cache-Control", "no-cache, private, max-age=0")
 		err := json.NewEncoder(w).Encode(map[string]bool{"ok": true})
 		if err != nil {
 			app.Log.Errorw("error encoding body", "err", err)
 			http.Error(w, "error encoding body", http.StatusInternalServerError)
 		}
-		w.WriteHeader(300)
 	}
 }
