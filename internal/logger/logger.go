@@ -7,7 +7,7 @@ type Logger struct {
 }
 
 func NewLogger(filename string) (Logger, error) {
-	config := zap.NewDevelopmentConfig()
+	config := zap.NewProductionConfig()
 	config.OutputPaths = []string{"stdout", filename}
 	logger, err := config.Build(zap.AddCaller())
 	if err != nil {
