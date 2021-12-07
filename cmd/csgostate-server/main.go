@@ -2,11 +2,13 @@ package main
 
 import (
 	"fmt"
+	"github.com/pkg/errors"
 	"github.com/roessland/csgostate/internal/api"
 	"github.com/roessland/csgostate/internal/metrics"
 	"github.com/roessland/csgostate/internal/playerevents"
 	"github.com/roessland/csgostate/internal/server"
 	"github.com/roessland/csgostate/pkg/csgostate"
+	"io/fs"
 	"log"
 	"os"
 	"strings"
@@ -39,11 +41,11 @@ func writeArchive(app *server.App, year, month int) {
 	fileName := fmt.Sprintf("archive-states-%d-%d.json", year, month)
 
 	stat, err := os.Stat(fileName)
-	if err != nil {
+	if !errors.Is(err, fs.ErrNotExist) && err != nil {
 		app.Log.Warnw("stat archive", "err", err.Error())
 		return
 	}
-	if stat.Size() > 0 {
+	if stat != nil && stat.Size() > 0 {
 		app.Log.Warnw("archive already exists")
 		return
 	}
