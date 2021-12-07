@@ -23,10 +23,7 @@ func main() {
 
 	// stateGrep(app, `"name": "weapon_flashbang",`)
 
-	writeArchive(app, 2021, 9)
-	writeArchive(app, 2021, 10)
-	writeArchive(app, 2021, 11)
-	writeArchive(app, 2021, 12)
+	app.Log.Infow("deleted user db stuff", "err", app.StateRepo.DeleteUserDBStuff())
 
 	registerEventHandlers(app)
 

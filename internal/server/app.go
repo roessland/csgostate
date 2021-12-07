@@ -18,7 +18,8 @@ type App struct {
 	Log                   logger.Logger
 	SteamHTTPClient       *http.Client
 	SessionStore          *sessions.SessionStore
-	DB                    *bolt.DB
+	UserDB                *bolt.DB
+	StateDB               *bolt.DB
 	Discord               *discord.Client
 	UserRepo              userrepo.UserRepo
 	PlayerRepo            playerrepo.PlayerRepo
@@ -42,7 +43,12 @@ func NewApp(config Config) (*App, error) {
 
 	app.SessionStore = sessions.NewSessionStore([]byte(app.Config.SessionSecret))
 
-	app.DB, err = bolt.Open("csgostate.db", 0666, nil)
+	app.UserDB, err = bolt.Open("csgostate.db", 0600, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	app.StateDB, err = bolt.Open("csgostate-state.db", 0600, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -51,12 +57,12 @@ func NewApp(config Config) (*App, error) {
 
 	app.PlayerRepo = playerrepo.NewInMemoryPlayerRepo()
 
-	app.UserRepo, err = userrepo.NewDBUserRepo(app.DB, app.Config.PushTokenSecret)
+	app.UserRepo, err = userrepo.NewDBUserRepo(app.UserDB, app.Config.PushTokenSecret)
 	if err != nil {
 		return nil, err
 	}
 
-	app.StateRepo, err = staterepo.NewDBStateRepo(app.DB)
+	app.StateRepo, err = staterepo.NewDBStateRepo(app.UserDB, app.StateDB)
 	if err != nil {
 		return nil, err
 	}
@@ -69,6 +75,7 @@ func NewApp(config Config) (*App, error) {
 }
 
 func (app *App) Close() {
-	_ = app.DB.Close()
+	_ = app.UserDB.Close()
+	_ = app.StateDB.Close()
 	_ = app.Log.Sync()
 }

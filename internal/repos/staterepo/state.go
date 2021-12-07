@@ -10,6 +10,7 @@ import (
 	"io"
 	"io/ioutil"
 	"os"
+	"strings"
 	"time"
 )
 
@@ -21,12 +22,14 @@ type StateRepo interface {
 	GetAllForPlayer(steamID string) ([]csgostate.State, error)
 	GetAll() ([]csgostate.State, error)
 	ArchiveMonth(year, month int, w io.Writer) error
+	DeleteUserDBStuff() error
 }
 
 var _ StateRepo = &DBStateRepo{}
 
 type DBStateRepo struct {
-	db *bolt.DB
+	userDB  *bolt.DB
+	stateDB *bolt.DB
 }
 
 var statesBucketName = []byte("states")
@@ -35,16 +38,17 @@ func getStatesBucketNameForUser(steamID string) []byte {
 	return []byte(fmt.Sprintf("states-%s", steamID))
 }
 
-func NewDBStateRepo(db *bolt.DB) (*DBStateRepo, error) {
+func NewDBStateRepo(userDB *bolt.DB, stateDB *bolt.DB) (*DBStateRepo, error) {
 	return &DBStateRepo{
-		db: db,
+		userDB:  userDB,
+		stateDB: stateDB,
 	}, nil
 }
 
 // GetLatest gets the latest state in the DB.
 func (stateRepo *DBStateRepo) GetLatest() (*csgostate.State, error) {
 	var state *csgostate.State
-	err := stateRepo.db.View(func(tx *bolt.Tx) error {
+	err := stateRepo.stateDB.View(func(tx *bolt.Tx) error {
 		bucket := tx.Bucket(statesBucketName)
 		if bucket == nil {
 			return nil
@@ -76,7 +80,7 @@ func (stateRepo *DBStateRepo) GetLatest() (*csgostate.State, error) {
 // GetLatestForPlayer gets the latest state in the DB for a certain player.
 func (stateRepo *DBStateRepo) GetLatestForPlayer(steamID string) (*csgostate.State, error) {
 	var state *csgostate.State
-	err := stateRepo.db.View(func(tx *bolt.Tx) error {
+	err := stateRepo.stateDB.View(func(tx *bolt.Tx) error {
 		bucketName := getStatesBucketNameForUser(steamID)
 		bucket := tx.Bucket(bucketName)
 		if bucket == nil {
@@ -111,7 +115,7 @@ func (stateRepo *DBStateRepo) GetLatestForPlayer(steamID string) (*csgostate.Sta
 // Value is the raw json.
 func (stateRepo *DBStateRepo) Push(state *csgostate.State) error {
 	// Store the user in the user bucket using the SteamID as the key.
-	err := stateRepo.db.Update(func(tx *bolt.Tx) error {
+	err := stateRepo.stateDB.Update(func(tx *bolt.Tx) error {
 		// states
 		{
 			bucket, err := tx.CreateBucketIfNotExists(statesBucketName)
@@ -156,7 +160,7 @@ func itob(v uint64) []byte {
 }
 
 func (stateRepo *DBStateRepo) DebugJsonForPlayer(steamID string) error {
-	return stateRepo.db.View(func(tx *bolt.Tx) error {
+	return stateRepo.stateDB.View(func(tx *bolt.Tx) error {
 		bucketName := getStatesBucketNameForUser(steamID)
 		bucket := tx.Bucket(bucketName)
 		if bucket == nil {
@@ -207,7 +211,7 @@ func prettyPrintState(state *csgostate.State) string {
 // GetAll gets all states in DB.
 func (stateRepo *DBStateRepo) GetAll() ([]csgostate.State, error) {
 	var states []csgostate.State
-	err := stateRepo.db.View(func(tx *bolt.Tx) error {
+	err := stateRepo.stateDB.View(func(tx *bolt.Tx) error {
 		bucket := tx.Bucket(statesBucketName)
 		if bucket == nil {
 			return nil
@@ -235,7 +239,7 @@ func (stateRepo *DBStateRepo) GetAll() ([]csgostate.State, error) {
 // GetAllForPlayer gets all states in DB for a certain player.
 func (stateRepo *DBStateRepo) GetAllForPlayer(steamID string) ([]csgostate.State, error) {
 	var states []csgostate.State
-	err := stateRepo.db.View(func(tx *bolt.Tx) error {
+	err := stateRepo.stateDB.View(func(tx *bolt.Tx) error {
 		bucketName := getStatesBucketNameForUser(steamID)
 		bucket := tx.Bucket(bucketName)
 		if bucket == nil {
@@ -264,7 +268,7 @@ func (stateRepo *DBStateRepo) GetAllForPlayer(steamID string) ([]csgostate.State
 // ArchiveMonth writes a month of data to JSON.
 func (stateRepo *DBStateRepo) ArchiveMonth(year, month int, w io.Writer) error {
 	encoder := json.NewEncoder(w)
-	return stateRepo.db.View(func(tx *bolt.Tx) error {
+	return stateRepo.stateDB.View(func(tx *bolt.Tx) error {
 		bucket := tx.Bucket(statesBucketName)
 		if bucket == nil {
 			return nil
@@ -296,5 +300,18 @@ func (stateRepo *DBStateRepo) ArchiveMonth(year, month int, w io.Writer) error {
 			}
 		}
 		return nil
+	})
+}
+
+// DeleteUserDBStuff deletes all state related info from user DB.
+func (stateRepo *DBStateRepo) DeleteUserDBStuff() error {
+	return stateRepo.userDB.Update(func(tx *bolt.Tx) error {
+		return tx.ForEach(func(name []byte, b *bolt.Bucket) error {
+			fmt.Println("found", string(name))
+			if string(name) == "states" || strings.HasPrefix(string(name), "states-") {
+				return tx.DeleteBucket(name)
+			}
+			return nil
+		})
 	})
 }
