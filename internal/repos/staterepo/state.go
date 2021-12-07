@@ -7,8 +7,10 @@ import (
 	"github.com/pkg/errors"
 	"github.com/roessland/csgostate/pkg/csgostate"
 	bolt "go.etcd.io/bbolt"
+	"io"
 	"io/ioutil"
 	"os"
+	"time"
 )
 
 type StateRepo interface {
@@ -18,6 +20,7 @@ type StateRepo interface {
 	DebugJsonForPlayer(steamID string) error
 	GetAllForPlayer(steamID string) ([]csgostate.State, error)
 	GetAll() ([]csgostate.State, error)
+	ArchiveMonth(year, month int, w io.Writer) error
 }
 
 var _ StateRepo = &DBStateRepo{}
@@ -201,7 +204,6 @@ func prettyPrintState(state *csgostate.State) string {
 	return string(buf)
 }
 
-
 // GetAll gets all states in DB.
 func (stateRepo *DBStateRepo) GetAll() ([]csgostate.State, error) {
 	var states []csgostate.State
@@ -257,4 +259,42 @@ func (stateRepo *DBStateRepo) GetAllForPlayer(steamID string) ([]csgostate.State
 		return nil, err
 	}
 	return states, nil
+}
+
+// ArchiveMonth writes a month of data to JSON.
+func (stateRepo *DBStateRepo) ArchiveMonth(year, month int, w io.Writer) error {
+	encoder := json.NewEncoder(w)
+	return stateRepo.db.View(func(tx *bolt.Tx) error {
+		bucket := tx.Bucket(statesBucketName)
+		if bucket == nil {
+			return nil
+		}
+
+		cursor := bucket.Cursor()
+		for key, val := cursor.First(); key != nil; key, val = cursor.Next() {
+			// Only events from a certain month
+			s := csgostate.State{}
+			err := json.Unmarshal(val, &s)
+			if err != nil {
+				return err
+			}
+			t := time.Unix(int64(s.Provider.Timestamp), 0)
+			stateYear, stateMonth, _ := t.Date()
+			if stateYear != year || int(stateMonth) != month {
+				continue
+			}
+
+			// Decode/encode to ensure we only write a single line to output
+			var v interface{}
+			err = json.Unmarshal(val, &v)
+			if err != nil {
+				return err
+			}
+			err = encoder.Encode(v)
+			if err != nil {
+				return err
+			}
+		}
+		return nil
+	})
 }

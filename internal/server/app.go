@@ -14,17 +14,17 @@ import (
 )
 
 type App struct {
-	Config          Config
-	Log             logger.Logger
-	SteamHTTPClient *http.Client
-	SessionStore    *sessions.SessionStore
-	DB              *bolt.DB
-	Discord         *discord.Client
-	UserRepo        userrepo.UserRepo
-	PlayerRepo      playerrepo.PlayerRepo
-	StateRepo       staterepo.StateRepo
-	StateListener   *csgostate.Listener
-	PlayerEvents    *playerevents.EventRepo
+	Config                Config
+	Log                   logger.Logger
+	SteamHTTPClient       *http.Client
+	SessionStore          *sessions.SessionStore
+	DB                    *bolt.DB
+	Discord               *discord.Client
+	UserRepo              userrepo.UserRepo
+	PlayerRepo            playerrepo.PlayerRepo
+	StateRepo             staterepo.StateRepo
+	StateListener         *csgostate.Listener
+	PlayerEvents          *playerevents.EventRepo
 	PlayerEventsExtractor *playerevents.Extractor
 }
 

@@ -21,6 +21,11 @@ func main() {
 
 	// stateGrep(app, `"name": "weapon_flashbang",`)
 
+	writeArchive(app, 2021, 9)
+	writeArchive(app, 2021, 10)
+	writeArchive(app, 2021, 11)
+	writeArchive(app, 2021, 12)
+
 	registerEventHandlers(app)
 
 	// debugEventHandlers(app)
@@ -28,6 +33,35 @@ func main() {
 	go metrics.Serve(app.Log)
 
 	api.ServeAPI(app)
+}
+
+func writeArchive(app *server.App, year, month int) {
+	fileName := fmt.Sprintf("archive-states-%d-%d.json", year, month)
+
+	stat, err := os.Stat(fileName)
+	if err != nil {
+		app.Log.Warnw("stat archive", "err", err.Error())
+		return
+	}
+	if stat.Size() > 0 {
+		app.Log.Warnw("archive already exists")
+		return
+	}
+
+	f, err := os.OpenFile(fileName, os.O_WRONLY|os.O_CREATE, 0660)
+	if err != nil {
+		app.Log.Warnw("opening archive", "err", err.Error())
+		return
+	}
+	defer f.Close()
+
+	err = app.StateRepo.ArchiveMonth(2021, month, f)
+	if err != nil {
+		app.Log.Errorw("writing archive", "err", err.Error())
+		return
+	}
+
+	app.Log.Info(fmt.Sprintf("wrote archive for %d-%d", year, month))
 }
 
 func registerEventHandlers(app *server.App) {
