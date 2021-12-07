@@ -62,7 +62,7 @@ func NewApp(config Config) (*App, error) {
 		return nil, err
 	}
 
-	app.StateRepo, err = staterepo.NewDBStateRepo(app.UserDB, app.StateDB)
+	app.StateRepo, err = staterepo.NewDBStateRepo(app.StateDB)
 	if err != nil {
 		return nil, err
 	}

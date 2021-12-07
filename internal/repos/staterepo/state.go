@@ -10,7 +10,6 @@ import (
 	"io"
 	"io/ioutil"
 	"os"
-	"strings"
 	"time"
 )
 
@@ -22,7 +21,6 @@ type StateRepo interface {
 	GetAllForPlayer(steamID string) ([]csgostate.State, error)
 	GetAll() ([]csgostate.State, error)
 	ArchiveMonth(year, month int, w io.Writer) error
-	DeleteUserDBStuff() error
 }
 
 var _ StateRepo = &DBStateRepo{}
@@ -38,9 +36,8 @@ func getStatesBucketNameForUser(steamID string) []byte {
 	return []byte(fmt.Sprintf("states-%s", steamID))
 }
 
-func NewDBStateRepo(userDB *bolt.DB, stateDB *bolt.DB) (*DBStateRepo, error) {
+func NewDBStateRepo(stateDB *bolt.DB) (*DBStateRepo, error) {
 	return &DBStateRepo{
-		userDB:  userDB,
 		stateDB: stateDB,
 	}, nil
 }
@@ -300,18 +297,5 @@ func (stateRepo *DBStateRepo) ArchiveMonth(year, month int, w io.Writer) error {
 			}
 		}
 		return nil
-	})
-}
-
-// DeleteUserDBStuff deletes all state related info from user DB.
-func (stateRepo *DBStateRepo) DeleteUserDBStuff() error {
-	return stateRepo.userDB.Update(func(tx *bolt.Tx) error {
-		return tx.ForEach(func(name []byte, b *bolt.Bucket) error {
-			fmt.Println("found", string(name))
-			if string(name) == "states" || strings.HasPrefix(string(name), "states-") {
-				return tx.DeleteBucket(name)
-			}
-			return nil
-		})
 	})
 }
