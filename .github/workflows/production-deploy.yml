@@ -28,11 +28,11 @@ jobs:
     - name: Deploy app
       run: |
         mkdir -p /home/runner/.ssh
-        ssh-keyscan csgostate.roessland.com >> /home/runner/.ssh/known_hosts
+        ssh-keyscan -p 222 csgostate.roessland.com >> /home/runner/.ssh/known_hosts
         echo "${{ secrets.SSH_PRIVATE_KEY }}" > /home/runner/.ssh/id_ed25519
         chmod 600 /home/runner/.ssh/id_ed25519
-        scp csgostate-server csgostate@csgostate.roessland.com:~/bin/csgostate-server-new
-        ssh csgostate@csgostate.roessland.com "rm bin/csgostate-server; mv bin/csgostate-server-new bin/csgostate-server; sudo /bin/systemctl restart csgostate"
+        scp -P 222 csgostate-server csgostate@csgostate.roessland.com:~/bin/csgostate-server-new
+        ssh -P 222 csgostate@csgostate.roessland.com "rm bin/csgostate-server; mv bin/csgostate-server-new bin/csgostate-server; sudo /bin/systemctl restart csgostate"
 
         status_code=$(curl --write-out %{http_code} --silent --output /dev/null https://csgostate.roessland.com/api/health)
 
